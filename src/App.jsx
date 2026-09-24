@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 /* ---------- Config: replace these before launch ---------- */
 const SIGNUP_URL = "#signup"; // TODO: your real signup / app URL
@@ -129,20 +129,37 @@ function FlowRow({ color, title, items }) {
 /* ---------- Page ---------- */
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const trackRef = useRef(null);
 
   const closeMenu = () => setMenuOpen(false);
 
   const scrollCards = (dir) => {
     const el = trackRef.current;
-    const card = el && el.querySelector(".talent-card");
+    if (!el) return;
+    const card = el.querySelector(".talent-card");
     if (!card) return;
-    const step = card.offsetWidth + 10; // 10px = gap in CSS
+    const step = card.offsetWidth + 14; // gap between cards
     const max = el.scrollWidth - el.clientWidth;
-    if (dir > 0 && el.scrollLeft >= max - 4) el.scrollTo({ left: 0, behavior: "smooth" });
-    else if (dir < 0 && el.scrollLeft <= 4) el.scrollTo({ left: max, behavior: "smooth" });
-    else el.scrollBy({ left: dir * step, behavior: "smooth" });
+
+    if (dir > 0 && el.scrollLeft >= max - 10) {
+      el.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (dir < 0 && el.scrollLeft <= 10) {
+      el.scrollTo({ left: max, behavior: "smooth" });
+    } else {
+      el.scrollBy({ left: dir * step, behavior: "smooth" });
+    }
   };
+
+  /* AUTO-FLOW CAROUSEL TIMER */
+  useEffect(() => {
+    if (isHovered) return;
+    const timer = setInterval(() => {
+      scrollCards(1);
+    }, 3500); // 3.5 seconds interval
+
+    return () => clearInterval(timer);
+  }, [isHovered]);
 
   return (
     <div className="site-shell" id="home">
@@ -269,14 +286,19 @@ function App() {
             <p>Not a job board. A showcase of real people and the work behind their claims.</p>
             <a className="text-link" href="#sectors">Browse by Sector <Arrow /></a>
           </div>
-          <div className="profile-showcase">
+          <div
+            className="profile-showcase"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             <div className="profile-controls">
               <button type="button" onClick={() => scrollCards(-1)} aria-label="Previous profiles">←</button>
               <button type="button" onClick={() => scrollCards(1)} aria-label="Next profiles">→</button>
             </div>
             <div className="profile-track" ref={trackRef}>
-              {PROFILES.map((p) => (
-                <article className="talent-card" key={p.name}>
+              {/* Duplicated profiles array so auto-flow feels continuous */}
+              {[...PROFILES, ...PROFILES].map((p, idx) => (
+                <article className="talent-card" key={`${p.name}-${idx}`}>
                   <div className="talent-image">
                     <Img src={p.img} />
                     <span className="talent-arrow" aria-hidden="true">↗</span>
