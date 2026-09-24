@@ -18,6 +18,11 @@ const IMG = {
   certificate: "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?auto=format&fit=crop&w=700&q=80",
   recruiter: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=85",
   mountain: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1400&q=85",
+  profileAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+  caseStudy: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80",
+  achievements: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80",
+  endorsements: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=600&q=80",
+  dashboard: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80"
 };
 
 const NAV_LINKS = [
@@ -99,9 +104,9 @@ function Img({ src, alt = "", eager = false }) {
   return <img src={src} alt={alt} loading={eager ? "eager" : "lazy"} decoding="async" />;
 }
 
-function Logo() {
+function Logo({ onNavigate }) {
   return (
-    <a className="brand" href="#home" aria-label="PDP home">
+    <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); onNavigate("/"); }} aria-label="PDP home">
       <span className="brand-mark"><span /></span>
       <span>
         <strong>PDP</strong>
@@ -127,8 +132,336 @@ function FlowRow({ color, title, items }) {
   );
 }
 
-/* ---------- App ---------- */
+/* ---------- Sub-View: Professionals Page ---------- */
+function ProfessionalsView({ onNavigate }) {
+  return (
+    <div className="pd2-page">
+      {/* Topbar */}
+      <header className="pd2-topbar">
+        <div className="pd2-brand" onClick={() => onNavigate("/")} style={{ cursor: "pointer" }}>
+          <div className="pd2-mark"><span /></div>
+          <div>
+            <strong>PDP</strong>
+            <small>FOR PROFESSIONALS</small>
+          </div>
+        </div>
+
+        <nav>
+          <a href="#pd2-how" className="active">How It Works</a>
+          <a href="#pd2-features">Features</a>
+          <a href="#pd2-proof">Proof & Credibility</a>
+          <a href="#pd2-testimonials">Testimonials</a>
+          <a href="#pd2-story">Career Story</a>
+        </nav>
+
+        <a href={SIGNUP_URL} className="pd2-header-cta">Get Started</a>
+
+        <button className="pd2-menu" aria-label="Toggle Menu">
+          <span /><span /><span />
+        </button>
+      </header>
+
+      {/* Hero */}
+      <section className="pd2-hero">
+        <div className="pd2-hero-copy">
+          <a href="/" onClick={(e) => { e.preventDefault(); onNavigate("/"); }} className="pd2-back">
+            <span>←</span> Back to Main Landing
+          </a>
+          <h1>
+            Stand Out to Employers with a <em>Living Profile</em>
+          </h1>
+          <p>
+            Transform your static resume into an interactive, proof-backed digital portfolio designed for modern professionals and recruiters.
+          </p>
+          <div className="pd2-actions">
+            <a href={SIGNUP_URL} className="pd2-btn primary">Create Your PDP</a>
+            <a href="#pd2-proof" className="pd2-btn outline">View Proof Demo</a>
+          </div>
+          <div className="pd2-trust">
+            <span><b>✓</b> Verified Credentials</span>
+            <span><b>✓</b> Recruiter Ready</span>
+          </div>
+        </div>
+
+        <div className="pd2-hero-art">
+          <div className="pd2-hero-glow" />
+          <Img src={IMG.hero} alt="Professional Hero" className="pd2-hero-person" />
+
+          {/* Floating Badges */}
+          <div className="pd2-float career">
+            <span>Career Video</span>
+            <i>▶</i>
+          </div>
+          <div className="pd2-float photos">
+            <span>Work Photos</span>
+          </div>
+          <div className="pd2-float projects">
+            <span>Projects</span>
+          </div>
+          <div className="pd2-float cert">
+            <div className="pd2-cert-art">📜</div>
+            <span>Certifications</span>
+          </div>
+          <div className="pd2-float achievement">
+            <div className="pd2-mini-chart">📈</div>
+            <span>Achievements</span>
+          </div>
+          <div className="pd2-float recommendation">
+            <div className="pd2-people">👥</div>
+            <span>Recommendations</span>
+          </div>
+
+          {/* Profile Card */}
+          <div className="pd2-profile-card">
+            <div className="pd2-avatar">
+              <Img src={IMG.profileAvatar} alt="Ananya Sharma" />
+            </div>
+            <div>
+              <strong>Ananya Sharma <span>•</span></strong>
+              <small>Product Designer</small>
+              <p>Designing products that people love.</p>
+              <div className="pd2-tags">
+                <i>UI/UX</i>
+                <i>Design</i>
+                <i>Product</i>
+              </div>
+            </div>
+            <div className="pd2-qr">📱</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 01 */}
+      <section className="pd2-section pd2-two-col" id="pd2-how">
+        <div className="pd2-section-copy">
+          <div className="pd2-no">01</div>
+          <div>
+            <h2>Turn Your Resume Into Your Professional Identity</h2>
+            <p>
+              Upload your existing resume. We structure your experience into a living professional profile that stands out to recruiters and peers alike.
+            </p>
+          </div>
+        </div>
+
+        <div className="pd2-resume-art">
+          <div className="pd2-paper">
+            <span>📄</span>
+            <b>Your Resume</b>
+            <small>(PDF)</small>
+          </div>
+          <div className="pd2-arrow">→</div>
+          <div className="pd2-mini-profile">
+            <Img src={IMG.profileAvatar} alt="Ananya" />
+            <strong>Ananya Sharma <small>•</small></strong>
+            <em>Product Designer</em>
+            <div className="pd2-list">
+              <span><i /> Experience ────────</span>
+              <span><i /> Skills ────────</span>
+              <span><i /> Projects ────────</span>
+              <span><i /> Education ────────</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 02: Proof */}
+      <section className="pd2-section pd2-proof-section" id="pd2-proof">
+        <div className="pd2-section-head">
+          <div className="pd2-section-copy">
+            <div className="pd2-no">02</div>
+            <div>
+              <h2>Bring Proof To Your Claims</h2>
+              <p>Don't just list achievements—show evidence with attached media, links, and documents.</p>
+            </div>
+          </div>
+          <a href="#pd2-features" className="pd2-small-cta">See Proof Gallery</a>
+        </div>
+
+        <div className="pd2-proof-grid">
+          <div className="pd2-proof-card">
+            <div className="pd2-proof-image">
+              <span>📂</span>
+              <Img src={IMG.caseStudy} alt="Case Studies" />
+            </div>
+            <h3>Project Case Studies</h3>
+            <p>Attach rich visual portfolios, live demos, and project impact metrics directly.</p>
+          </div>
+
+          <div className="pd2-proof-card">
+            <div className="pd2-proof-image">
+              <span>🏆</span>
+              <Img src={IMG.achievements} alt="Verified Achievements" />
+            </div>
+            <h3>Verified Achievements</h3>
+            <p>Highlight team awards, leadership milestones, and verified certifications.</p>
+          </div>
+
+          <div className="pd2-proof-card">
+            <div className="pd2-proof-image">
+              <span>💬</span>
+              <Img src={IMG.endorsements} alt="Social Proof" />
+            </div>
+            <h3>Peer Endorsements</h3>
+            <p>Showcase direct testimonials from managers, clients, and team members.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 03: Features */}
+      <section className="pd2-section pd2-evidence" id="pd2-features">
+        <div className="pd2-section-copy">
+          <div className="pd2-no">03</div>
+          <div>
+            <h2>Control Your Narrative with Context</h2>
+            <p>Organize your work samples into structured evidence cards that tell a complete story.</p>
+          </div>
+        </div>
+
+        <div className="pd2-evidence-content">
+          <div className="pd2-evidence-card">
+            <div className="pd2-icon">✦</div>
+            <strong>Interactive Portfolio Cards</strong>
+            <small>Rich Media & Live Links</small>
+            <p>Embed designs, code repositories, dashboards, or presentations seamlessly.</p>
+            <a href={SIGNUP_URL}>Explore Examples →</a>
+          </div>
+
+          <div className="pd2-inventory">
+            <Img src={IMG.dashboard} alt="Dashboard Preview" />
+            <div>
+              <small>FEATURED PROJECT</small>
+              <strong>FinTech Mobile App Redesign</strong>
+              <p>Increased user conversion by 34% through intuitive design overhaul.</p>
+              <a href={SIGNUP_URL}>View Case Study</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 04: Testimonials */}
+      <section className="pd2-section pd2-speak" id="pd2-testimonials">
+        <div className="pd2-section-copy">
+          <div className="pd2-no">04</div>
+          <div>
+            <h2>Validated by Industry Peers</h2>
+            <p>Real feedback from colleagues and hiring managers who have reviewed PDP profiles.</p>
+          </div>
+        </div>
+
+        <div className="pd2-testimonials">
+          <article>
+            <div className="pd2-person">
+              <span>RK</span>
+              <div>
+                <strong>Rohan Kapoor</strong>
+                <small>VP of Product</small>
+              </div>
+            </div>
+            <p>"PDP profiles give me 10x more insight into a candidate than a standard PDF ever could."</p>
+            <span className="pd2-type">Hiring Manager</span>
+          </article>
+
+          <article>
+            <div className="pd2-person">
+              <span>SM</span>
+              <div>
+                <strong>Sneha Mehta</strong>
+                <small>Lead UX Researcher</small>
+              </div>
+            </div>
+            <p>"Having my case studies, video intro, and recommendations in one place landed my dream job."</p>
+            <span className="pd2-type">Senior Designer</span>
+          </article>
+
+          <article>
+            <div className="pd2-person">
+              <span>AR</span>
+              <div>
+                <strong>Amit Roy</strong>
+                <small>Tech Recruiter</small>
+              </div>
+            </div>
+            <p>"Verified project proof eliminates back-and-forth emails during early screening."</p>
+            <span className="pd2-type">Talent Acquisition</span>
+          </article>
+        </div>
+      </section>
+
+      {/* Section 05: Timeline */}
+      <section className="pd2-section pd2-story" id="pd2-story">
+        <div className="pd2-section-copy">
+          <div className="pd2-no">05</div>
+          <div>
+            <h2>Your Complete Career Story</h2>
+            <p>Track your progression, milestones, and continuous learning timeline over time.</p>
+          </div>
+        </div>
+
+        <div className="pd2-timeline">
+          <div>
+            <span>2021</span>
+            <b>Junior UI/UX</b>
+            <small>Started journey</small>
+          </div>
+          <div>
+            <span>2023</span>
+            <b>Product Designer</b>
+            <small>Led mobile design</small>
+          </div>
+          <div className="current">
+            <span>2025</span>
+            <b>Senior Designer</b>
+            <small>Leading core team</small>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom CTA */}
+      <section className="pd2-bottom-cta">
+        <div>
+          <p>Ready to upgrade your professional presence?</p>
+          <h2>Build Your Professional Profile Today</h2>
+          <a href={SIGNUP_URL} className="pd2-btn primary">Create Profile Now</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); onNavigate("/"); }} className="pd2-btn outline">Return to Home</a>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="pd2-footer">
+        <div className="pd2-footer-inner">
+          <div className="pd2-brand" onClick={() => onNavigate("/")} style={{ cursor: "pointer" }}>
+            <div className="pd2-mark"><span /></div>
+            <div>
+              <strong>PDP</strong>
+              <small>Professional Digital Profile</small>
+            </div>
+          </div>
+
+          <div className="pd2-footer-message">
+            <strong>Empowering Professionals worldwide.</strong><br />
+            Present your best self to recruiters and network partners.
+          </div>
+
+          <nav>
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms of Service</a>
+            <a href="#contact">Contact Us</a>
+          </nav>
+
+          <div className="pd2-social">
+            <span>in</span>
+            <span>tw</span>
+            <span>gh</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ---------- Main App ---------- */
 function App() {
+  const [currentPath, setCurrentPath] = useState("/");
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedSector, setSelectedSector] = useState("all");
   const [isHovered, setIsHovered] = useState(false);
@@ -136,6 +469,11 @@ function App() {
   const profilesSectionRef = useRef(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  const navigateTo = (path) => {
+    setCurrentPath(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const filteredProfiles = selectedSector === "all"
     ? ALL_PROFILES
@@ -170,21 +508,38 @@ function App() {
   };
 
   useEffect(() => {
-    if (isHovered || displayProfiles.length === 0) return;
+    if (isHovered || displayProfiles.length === 0 || currentPath !== "/") return;
     const timer = setInterval(() => {
       scrollCards(1);
     }, 3500);
 
     return () => clearInterval(timer);
-  }, [isHovered, selectedSector, displayProfiles.length]);
+  }, [isHovered, selectedSector, displayProfiles.length, currentPath]);
+
+  // Render sub-view if path matches /professionals
+  if (currentPath === "/professionals") {
+    return <ProfessionalsView onNavigate={navigateTo} />;
+  }
 
   return (
     <div className="site-shell" id="home">
       <header className="topbar">
-        <Logo />
+        <Logo onNavigate={navigateTo} />
         <nav id="primary-nav" className={menuOpen ? "nav open" : "nav"} aria-label="Primary">
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href} onClick={closeMenu}>{l.label}</a>
+            <a 
+              key={l.href} 
+              href={l.href} 
+              onClick={(e) => {
+                if (l.href === "/professionals") {
+                  e.preventDefault();
+                  navigateTo("/professionals");
+                }
+                closeMenu();
+              }}
+            >
+              {l.label}
+            </a>
           ))}
           <a className="nav-cta" href={SIGNUP_URL} onClick={closeMenu}>Create Your PDP</a>
         </nav>
@@ -255,7 +610,7 @@ function App() {
                   <span className="qr" aria-hidden="true">▦</span>
                 </div>
                 <p>Designing products that help people live.</p>
-                <a href="#profiles" className="mini-btn">View Profile <Arrow /></a>
+                <a href="/professionals" onClick={(e) => { e.preventDefault(); navigateTo("/professionals"); }} className="mini-btn">View Profile <Arrow /></a>
               </div>
             </div>
           </div>
@@ -349,7 +704,12 @@ function App() {
             <div className="profile-track" ref={trackRef}>
               {displayProfiles.length > 0 ? (
                 displayProfiles.map((p, idx) => (
-                  <article className="talent-card" key={`${p.name}-${idx}`}>
+                  <article 
+                    className="talent-card" 
+                    key={`${p.name}-${idx}`}
+                    onClick={() => navigateTo("/professionals")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="talent-image">
                       <Img src={p.img} />
                       <span className="talent-arrow" aria-hidden="true">↗</span>
@@ -388,7 +748,7 @@ function App() {
             </div>
             <div className="flows">
               <FlowRow color="blue" title="For Professionals" items={PRO_FLOW} />
-              <a className="learn" href="#professionals">Learn More <Arrow /></a>
+              <a className="learn" href="/professionals" onClick={(e) => { e.preventDefault(); navigateTo("/professionals"); }}>Learn More <Arrow /></a>
               <FlowRow color="purple" title="For Companies" items={COMPANY_FLOW} />
               <a className="learn" href="#recruiters">Learn More <Arrow /></a>
             </div>
@@ -450,14 +810,26 @@ function App() {
 
       <footer className="footer">
         <div className="footer-top">
-          <Logo />
+          <Logo onNavigate={navigateTo} />
           <div className="footer-message">Build your professional presence.<br /><strong>Showcase your work. Get discovered.</strong></div>
           <a className="btn primary" href={SIGNUP_URL}>Create Your PDP — Free <Arrow /></a>
         </div>
         <div className="footer-bottom">
           <nav aria-label="Footer">
             {FOOTER_LINKS.map((l) => (
-              <a key={l.href} href={l.href}><span aria-hidden="true" style={{ fontSize: "1rem" }}>{l.icon}</span><span>{l.label}</span></a>
+              <a 
+                key={l.href} 
+                href={l.href}
+                onClick={(e) => {
+                  if (l.href === "#professionals") {
+                    e.preventDefault();
+                    navigateTo("/professionals");
+                  }
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: "1rem" }}>{l.icon}</span>
+                <span>{l.label}</span>
+              </a>
             ))}
           </nav>
           <div className="socials">
