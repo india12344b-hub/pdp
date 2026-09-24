@@ -137,19 +137,16 @@ function App() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Filter profiles based on selected sector
   const filteredProfiles = selectedSector === "all"
     ? ALL_PROFILES
     : ALL_PROFILES.filter((p) => p.sector === selectedSector);
 
-  // Ensure double duplication for smooth infinite scrolling
   const displayProfiles = filteredProfiles.length > 0 
     ? [...filteredProfiles, ...filteredProfiles] 
     : [];
 
   const handleSectorSelect = (sectorId) => {
     setSelectedSector(sectorId);
-    // Smooth scroll down to the carousel when a sector is picked
     if (profilesSectionRef.current) {
       profilesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -172,7 +169,6 @@ function App() {
     }
   };
 
-  /* Auto-flow timer for filtered carousel */
   useEffect(() => {
     if (isHovered || displayProfiles.length === 0) return;
     const timer = setInterval(() => {
@@ -279,8 +275,8 @@ function App() {
           </div>
         </section>
 
-        {/* SECTORS (HORIZONTAL & FIT-TO-TEXT) */}
-        <section className="sector-talent section-pad" id="sectors">
+        {/* SECTORS (REDUCED BOTTOM PADDING) */}
+        <section className="sector-talent section-pad" id="sectors" style={{ paddingBottom: "0px" }}>
           <div className="section-intro">
             <div className="eyebrow">TALENT BY SECTOR</div>
             <h2>Find professionals <em>for your industry.</em></h2>
@@ -294,7 +290,8 @@ function App() {
               flexDirection: "row",
               overflowX: "auto",
               gap: "12px",
-              paddingBottom: "12px",
+              paddingBottom: "10px",
+              marginBottom: "0px",
               whiteSpace: "nowrap",
               scrollbarWidth: "thin"
             }}
@@ -310,7 +307,7 @@ function App() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
-                    width: "auto", // Fit to content
+                    width: "auto",
                     padding: "10px 18px",
                     borderRadius: "30px",
                     border: active ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.15)",
@@ -330,17 +327,8 @@ function App() {
           </div>
         </section>
 
-        {/* PEOPLE (CAROUSEL AUTO-UPDATED BY SECTOR) */}
-        <section className="profiles section-pad" id="profiles" ref={profilesSectionRef}>
-          <div className="section-intro">
-            <div className="eyebrow">PEOPLE ON PDP</div>
-            <h2>
-              A living exhibition<br />
-              <em>of {SECTORS.find((s) => s.id === selectedSector)?.title || "Professionals"}.</em>
-            </h2>
-            <p>Showcasing real people and the proof behind their experience.</p>
-          </div>
-
+        {/* CAROUSEL (WITHOUT HEADING TEXT, TIGHT SPACING) */}
+        <section className="profiles section-pad" id="profiles" ref={profilesSectionRef} style={{ paddingTop: "15px" }}>
           <div
             className="profile-showcase"
             onMouseEnter={() => setIsHovered(true)}
