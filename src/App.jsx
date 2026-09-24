@@ -21,7 +21,7 @@ const IMG = {
 };
 
 const NAV_LINKS = [
-  { href: "#professionals", label: "For Professionals" },
+  { href: "/professionals", label: "For Professionals" },
   { href: "#recruiters", label: "For Recruiters" },
   { href: "#how", label: "How It Works" },
   { href: "#about", label: "About" },
