@@ -137,6 +137,30 @@ function App() {
           </div>
         </section>
 
+        <section className="sector-talent section-pad" id="sectors">
+          <div className="section-intro">
+            <div className="eyebrow">TALENT BY SECTOR</div>
+            <h2>Find professionals <em>for your industry.</em></h2>
+            <p>Explore PDP profiles by sector and discover people with real work, projects, photos and proof behind their experience.</p>
+          </div>
+          <div className="sector-grid">
+            {[
+              ["Technology & IT", "Software, product, data, AI & engineering"],
+              ["Design & Creative", "UI/UX, graphic, content & visual design"],
+              ["Business & Finance", "Sales, marketing, finance & operations"],
+              ["Education", "Teachers, trainers, mentors & academic experts"],
+              ["Healthcare", "Doctors, specialists & healthcare professionals"],
+              ["More Sectors", "Explore professionals across industries"]
+            ].map(([title, desc]) => (
+              <a className="sector-card" href="#profiles" key={title}>
+                <span className="sector-dot">↗</span>
+                <strong>{title}</strong>
+                <small>{desc}</small>
+              </a>
+            ))}
+          </div>
+        </section>
+
         <section className="profiles section-pad" id="profiles">
           <div className="section-intro">
             <div className="eyebrow">PEOPLE ON PDP</div>
@@ -149,8 +173,8 @@ function App() {
               <button onClick={prevProfiles} aria-label="Previous profile">←</button>
               <button onClick={nextProfiles} aria-label="Next profile">→</button>
             </div>
-            <div className="profile-track">
-              {profiles.map((p, i) => (
+            <div className="profile-track" style={{ transform: `translateX(-${profileIndex * 25}%)` }}>
+              {[...profiles, ...profiles].map((p, i) => (
                 <article className={`talent-card ${i === profileIndex ? "active" : ""}`} key={p.name}>
                   <div className="talent-image"><img src={p.img} alt="" /><span className="talent-arrow">↗</span></div>
                   <div className="talent-info"><h3>{p.name}</h3><strong>{p.role}</strong><p>{p.meta}</p></div>

@@ -160,3 +160,39 @@ h1 em,h2 em{font-style:normal;color:var(--cyan)}
   .flow-row{display:grid;grid-template-columns:1fr 14px 1fr}.flow-step:nth-of-type(n+5),.flow-arrow:nth-of-type(n+6){display:none}.flow-group{margin-bottom:15px}.flow-step strong{font-size:8px}
   .interest-panel{width:78%;padding:17px}.footer-bottom nav span{font-size:5.5px}
 }
+/* V3: sector-specific talent discovery */
+.sector-talent{border-top:1px solid var(--line2);padding-top:42px;padding-bottom:34px}
+.sector-talent .section-intro{max-width:720px}
+.sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
+.sector-card{display:block;text-decoration:none;border:1px solid rgba(85,155,195,.2);background:linear-gradient(145deg,rgba(8,30,48,.9),rgba(4,17,29,.94));border-radius:10px;padding:16px;color:#e7f3fb;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.sector-card:hover{transform:translateY(-3px);border-color:rgba(85,231,208,.5);background:linear-gradient(145deg,rgba(12,39,57,.96),rgba(5,19,32,.98))}
+.sector-dot{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;border:1px solid rgba(85,231,208,.45);color:#55e7d0;font-size:13px;margin-bottom:9px}
+.sector-card strong{display:block;font-size:16px;margin-bottom:5px}
+.sector-card small{display:block;color:#9fb5c7;font-size:13px;line-height:1.45}
+
+/* V3: readable exhibition typography + functional sliding track */
+.profiles .section-intro p{font-size:16px;line-height:1.7}
+.talent-info h3{font-size:16px!important;margin-bottom:5px}
+.talent-info strong{font-size:13px!important}
+.talent-info p{font-size:14px!important;line-height:1.5;color:#91a8ba!important}
+.profile-showcase{overflow:hidden}
+.profile-track{display:flex;grid-template-columns:none;gap:9px;transition:transform .45s cubic-bezier(.22,.61,.36,1);will-change:transform}
+.profile-track .talent-card{flex:0 0 calc(25% - 7px)}
+
+@media(max-width:720px){
+  .sector-talent{padding-top:34px;padding-bottom:28px}
+  .sector-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .sector-card{padding:14px}
+  .sector-card strong{font-size:14px}
+  .sector-card small{font-size:12px}
+  .profiles .section-intro p{font-size:14px}
+  .profile-showcase{overflow:hidden}
+  .profile-track .talent-card{flex:0 0 calc(50% - 5px)}
+}
+@media(max-width:430px){
+  .sector-grid{grid-template-columns:1fr}
+  .profile-track .talent-card{flex:0 0 70%}
+  .talent-info h3{font-size:15px!important}
+  .talent-info strong{font-size:12px!important}
+  .talent-info p{font-size:13px!important}
+}
