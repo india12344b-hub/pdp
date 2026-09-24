@@ -221,23 +221,30 @@ function App() {
 
           <div className="hero-visual">
             <div className="hero-glow" />
-            <div className="floating-shot shot-project">
-              <Img src={IMG.work1} />
-              <span><Play small /> Project Demo</span>
-            </div>
-            <div className="floating-shot shot-team">
-              <Img src={IMG.work3} />
-              <span>Team Collaboration</span>
-            </div>
-            <div className="floating-shot shot-photos">
-              <Img src={IMG.work2} />
-              <span>Work Photos</span>
-            </div>
-            <div className="floating-shot shot-trip">
-              <Img src={IMG.trip} />
-              <span>Business Trip</span>
+
+            {/* Orbit Container wrapping floating screens */}
+            <div className="orbit-container">
+              <div className="orbit-track">
+                <div className="floating-shot shot-project">
+                  <Img src={IMG.work1} />
+                  <span><Play small /> Project Demo</span>
+                </div>
+                <div className="floating-shot shot-team">
+                  <Img src={IMG.work3} />
+                  <span>Team Collaboration</span>
+                </div>
+                <div className="floating-shot shot-photos">
+                  <Img src={IMG.work2} />
+                  <span>Work Photos</span>
+                </div>
+                <div className="floating-shot shot-trip">
+                  <Img src={IMG.trip} />
+                  <span>Business Trip</span>
+                </div>
+              </div>
             </div>
 
+            {/* Center Phone */}
             <div className="phone-card">
               <div className="phone-notch" />
               <Img src={IMG.hero} alt="PDP profile preview" eager />
@@ -275,7 +282,7 @@ function App() {
           </div>
         </section>
 
-        {/* SECTORS (REDUCED BOTTOM PADDING) */}
+        {/* SECTORS */}
         <section className="sector-talent section-pad" id="sectors" style={{ paddingBottom: "0px" }}>
           <div className="section-intro">
             <div className="eyebrow">TALENT BY SECTOR</div>
@@ -327,7 +334,7 @@ function App() {
           </div>
         </section>
 
-        {/* CAROUSEL (WITHOUT HEADING TEXT, TIGHT SPACING) */}
+        {/* CAROUSEL */}
         <section className="profiles section-pad" id="profiles" ref={profilesSectionRef} style={{ paddingTop: "15px" }}>
           <div
             className="profile-showcase"
