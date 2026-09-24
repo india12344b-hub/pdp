@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 
-/* ---------- Config: replace these before launch ---------- */
-const SIGNUP_URL = "#signup"; // TODO: your real signup / app URL
+/* ---------- Config ---------- */
+const SIGNUP_URL = "#signup";
 const SOCIAL = {
-  linkedin: "#", // TODO
-  x: "#",        // TODO
-  youtube: "#",  // TODO
+  linkedin: "#",
+  x: "#",
+  youtube: "#",
 };
 
 /* ---------- Content ---------- */
@@ -27,11 +27,22 @@ const NAV_LINKS = [
   { href: "#about", label: "About" },
 ];
 
-const PROFILES = [
-  { name: "Ananya R.", role: "Product Designer", meta: "12 projects · 3 work videos", img: IMG.hero },
-  { name: "Karthik M.", role: "Full-Stack Engineer", meta: "6 career videos · 8 demos", img: IMG.work2 },
-  { name: "Priya S.", role: "Brand Strategist", meta: "Campaign proof · Awards", img: IMG.work1 },
-  { name: "Rahul T.", role: "Operations Lead", meta: "Site photos · Testimonials", img: IMG.work3 },
+const SECTORS = [
+  { id: "all", title: "All Sectors" },
+  { id: "tech", title: "Technology & IT" },
+  { id: "design", title: "Design & Creative" },
+  { id: "business", title: "Business & Finance" },
+  { id: "education", title: "Education" },
+  { id: "healthcare", title: "Healthcare" },
+];
+
+const ALL_PROFILES = [
+  { name: "Ananya R.", role: "Product Designer", sector: "design", meta: "12 projects · 3 work videos", img: IMG.hero },
+  { name: "Karthik M.", role: "Full-Stack Engineer", sector: "tech", meta: "6 career videos · 8 demos", img: IMG.work2 },
+  { name: "Priya S.", role: "Brand Strategist", sector: "business", meta: "Campaign proof · Awards", img: IMG.work1 },
+  { name: "Rahul T.", role: "Operations Lead", sector: "business", meta: "Site photos · Testimonials", img: IMG.work3 },
+  { name: "Dr. Ayesha K.", role: "Medical Specialist", sector: "healthcare", meta: "Research · Clinic logs", img: IMG.hero },
+  { name: "Vikram P.", role: "UI/UX Researcher", sector: "design", meta: "8 Case Studies · Wireframes", img: IMG.work1 },
 ];
 
 const PROOF_CARDS = [
@@ -39,15 +50,6 @@ const PROOF_CARDS = [
   { icon: "▸", title: "Work Videos", text: "Project demos, product walkthroughs, real processes.", img: IMG.work2 },
   { icon: "▦", title: "Work Photos", text: "Teams, events, client meetings, site work, awards — genuine moments.", img: IMG.work3 },
   { icon: "✓", title: "Credentials & Proof", text: "Projects, outcomes, certificates, testimonials from real people.", img: IMG.certificate },
-];
-
-const SECTORS = [
-  ["Technology & IT", "Software, product, data, AI & engineering"],
-  ["Design & Creative", "UI/UX, graphic, content & visual design"],
-  ["Business & Finance", "Sales, marketing, finance & operations"],
-  ["Education", "Teachers, trainers, mentors & academic experts"],
-  ["Healthcare", "Doctors, specialists & healthcare professionals"],
-  ["More Sectors", "Explore professionals across industries"],
 ];
 
 const PRO_FLOW = [
@@ -85,7 +87,6 @@ const FOOTER_LINKS = [
   { href: "#about", icon: "▤", label: "About" },
 ];
 
-/* ---------- Small shared pieces ---------- */
 function Arrow() {
   return <span aria-hidden="true">→</span>;
 }
@@ -126,20 +127,40 @@ function FlowRow({ color, title, items }) {
   );
 }
 
-/* ---------- Page ---------- */
+/* ---------- App ---------- */
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedSector, setSelectedSector] = useState("all");
   const [isHovered, setIsHovered] = useState(false);
   const trackRef = useRef(null);
+  const profilesSectionRef = useRef(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Filter profiles based on selected sector
+  const filteredProfiles = selectedSector === "all"
+    ? ALL_PROFILES
+    : ALL_PROFILES.filter((p) => p.sector === selectedSector);
+
+  // Ensure double duplication for smooth infinite scrolling
+  const displayProfiles = filteredProfiles.length > 0 
+    ? [...filteredProfiles, ...filteredProfiles] 
+    : [];
+
+  const handleSectorSelect = (sectorId) => {
+    setSelectedSector(sectorId);
+    // Smooth scroll down to the carousel when a sector is picked
+    if (profilesSectionRef.current) {
+      profilesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const scrollCards = (dir) => {
     const el = trackRef.current;
     if (!el) return;
     const card = el.querySelector(".talent-card");
     if (!card) return;
-    const step = card.offsetWidth + 14; // gap between cards
+    const step = card.offsetWidth + 14;
     const max = el.scrollWidth - el.clientWidth;
 
     if (dir > 0 && el.scrollLeft >= max - 10) {
@@ -151,15 +172,15 @@ function App() {
     }
   };
 
-  /* AUTO-FLOW CAROUSEL TIMER */
+  /* Auto-flow timer for filtered carousel */
   useEffect(() => {
-    if (isHovered) return;
+    if (isHovered || displayProfiles.length === 0) return;
     const timer = setInterval(() => {
       scrollCards(1);
-    }, 3500); // 3.5 seconds interval
+    }, 3500);
 
     return () => clearInterval(timer);
-  }, [isHovered]);
+  }, [isHovered, selectedSector, displayProfiles.length]);
 
   return (
     <div className="site-shell" id="home">
@@ -176,8 +197,6 @@ function App() {
           className="menu-btn"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label="Toggle navigation"
-          aria-expanded={menuOpen}
-          aria-controls="primary-nav"
         >
           <span /><span /><span />
         </button>
@@ -260,32 +279,68 @@ function App() {
           </div>
         </section>
 
-        {/* SECTORS */}
+        {/* SECTORS (HORIZONTAL & FIT-TO-TEXT) */}
         <section className="sector-talent section-pad" id="sectors">
           <div className="section-intro">
             <div className="eyebrow">TALENT BY SECTOR</div>
             <h2>Find professionals <em>for your industry.</em></h2>
-            <p>Explore PDP profiles by sector and discover people with real work, projects, photos and proof behind their experience.</p>
+            <p>Select a sector below to explore professionals with real work proof in that field.</p>
           </div>
-          <div className="sector-grid">
-            {SECTORS.map(([title, desc]) => (
-              <a className="sector-card" href="#profiles" key={title}>
-                <span className="sector-dot" aria-hidden="true">↗</span>
-                <strong>{title}</strong>
-                <small>{desc}</small>
-              </a>
-            ))}
+          
+          <div 
+            className="sector-grid" 
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              overflowX: "auto",
+              gap: "12px",
+              paddingBottom: "12px",
+              whiteSpace: "nowrap",
+              scrollbarWidth: "thin"
+            }}
+          >
+            {SECTORS.map((sec) => {
+              const active = selectedSector === sec.id;
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => handleSectorSelect(sec.id)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    width: "auto", // Fit to content
+                    padding: "10px 18px",
+                    borderRadius: "30px",
+                    border: active ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.15)",
+                    background: active ? "#1d4ed8" : "rgba(255,255,255,0.05)",
+                    color: active ? "#ffffff" : "#d1d5db",
+                    cursor: "pointer",
+                    fontSize: "0.95rem",
+                    fontWeight: active ? "600" : "400",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <span>{sec.title}</span>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.7 }}>↗</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
-        {/* PEOPLE */}
-        <section className="profiles section-pad" id="profiles">
+        {/* PEOPLE (CAROUSEL AUTO-UPDATED BY SECTOR) */}
+        <section className="profiles section-pad" id="profiles" ref={profilesSectionRef}>
           <div className="section-intro">
             <div className="eyebrow">PEOPLE ON PDP</div>
-            <h2>A living exhibition<br /><em>of professionals.</em></h2>
-            <p>Not a job board. A showcase of real people and the work behind their claims.</p>
-            <a className="text-link" href="#sectors">Browse by Sector <Arrow /></a>
+            <h2>
+              A living exhibition<br />
+              <em>of {SECTORS.find((s) => s.id === selectedSector)?.title || "Professionals"}.</em>
+            </h2>
+            <p>Showcasing real people and the proof behind their experience.</p>
           </div>
+
           <div
             className="profile-showcase"
             onMouseEnter={() => setIsHovered(true)}
@@ -295,23 +350,29 @@ function App() {
               <button type="button" onClick={() => scrollCards(-1)} aria-label="Previous profiles">←</button>
               <button type="button" onClick={() => scrollCards(1)} aria-label="Next profiles">→</button>
             </div>
+
             <div className="profile-track" ref={trackRef}>
-              {/* Duplicated profiles array so auto-flow feels continuous */}
-              {[...PROFILES, ...PROFILES].map((p, idx) => (
-                <article className="talent-card" key={`${p.name}-${idx}`}>
-                  <div className="talent-image">
-                    <Img src={p.img} />
-                    <span className="talent-arrow" aria-hidden="true">↗</span>
-                  </div>
-                  <div className="talent-info">
-                    <h3>{p.name}</h3>
-                    <strong>{p.role}</strong>
-                    <p>{p.meta}</p>
-                  </div>
-                </article>
-              ))}
+              {displayProfiles.length > 0 ? (
+                displayProfiles.map((p, idx) => (
+                  <article className="talent-card" key={`${p.name}-${idx}`}>
+                    <div className="talent-image">
+                      <Img src={p.img} />
+                      <span className="talent-arrow" aria-hidden="true">↗</span>
+                    </div>
+                    <div className="talent-info">
+                      <h3>{p.name}</h3>
+                      <strong>{p.role}</strong>
+                      <p>{p.meta}</p>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div style={{ padding: "40px", color: "#9ca3af", textAlign: "center", width: "100%" }}>
+                  No profiles available for this sector yet.
+                </div>
+              )}
             </div>
-            <p className="fine-print">Sample profiles shown for preview.</p>
+            <p className="fine-print">Showing preview profiles for selected sector.</p>
           </div>
         </section>
 
