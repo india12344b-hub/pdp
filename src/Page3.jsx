@@ -21,17 +21,30 @@ const experience = [
   { company: "NextGen Solutions", role: "Design Intern", years: "2015 — 2016 · 1 year", desc: "Assisted in design research, wireframing and prototyping for digital products.", tags: ["Research", "Prototype"] },
 ];
 
+const JOB_PROFILE = {
+  category: "Product Design",
+  title: "Product Designer",
+  totalYears: 8,
+  snapshot: [
+    { label: "Product Design", value: "8 yrs", detail: "Across XYZ Technologies, ABC Digital and Creative Labs" },
+    { label: "UX / Research", value: "7 yrs", detail: "User research, journeys, usability and product discovery" },
+    { label: "Design Systems", value: "5 yrs", detail: "Scalable UI systems and component libraries" },
+    { label: "Leadership", value: "4 yrs", detail: "Mentoring designers and leading cross-functional work" },
+    { label: "Figma", value: "6 yrs", detail: "Advanced product design, prototyping and collaboration" },
+  ],
+  focusLabel: "Featured Work",
+};
+
 const projects = [
-  { title: "Smart Inventory System", result: "Reduced stock errors by 28%", role: "Product Design", image: IMAGES.project1 },
-  { title: "HealthTrack App", result: "Improved user engagement by 45%", role: "UX Design", image: IMAGES.project2 },
-  { title: "eCommerce Platform", result: "Increased conversion rate by 32%", role: "Product Design", image: IMAGES.project3 },
+  { company: "XYZ Technologies", title: "Smart Inventory System", result: "Reduced stock errors by 28%", role: "Product Design", image: IMAGES.project1, evidence: ["Project walkthrough", "6 work photos"] },
+  { company: "XYZ Technologies", title: "HealthTrack App", result: "Improved user engagement by 45%", role: "UX Design", image: IMAGES.project2, evidence: ["UX walkthrough", "4 work photos"] },
+  { company: "ABC Digital", title: "eCommerce Platform", result: "Increased conversion rate by 32%", role: "Product Design", image: IMAGES.project3, evidence: ["Case study", "3 work photos"] },
 ];
 
 const workEvidence = [
-  { title: "Career Introduction", meta: "0:38", image: IMAGES.hero, type: "video" },
-  { title: "Project Walkthrough", meta: "0:18", image: IMAGES.work1, type: "video" },
-  { title: "Team Collaboration", meta: "12 photos", image: IMAGES.work2, type: "photos" },
-  { title: "Design Presentation", meta: "5 photos", image: IMAGES.work3, type: "photos" },
+  { company: "XYZ Technologies", title: "Project Walkthrough", meta: "0:18", image: IMAGES.work1, type: "video" },
+  { company: "XYZ Technologies", title: "Team Collaboration", meta: "12 photos", image: IMAGES.work2, type: "photos" },
+  { company: "ABC Digital", title: "Design Presentation", meta: "5 photos", image: IMAGES.work3, type: "photos" },
 ];
 
 const achievements = ["Best UX Award — Design Conference 2022", "Team Leadership — XYZ Technologies 2023", "Innovation Challenge Winner — Product Innovation 2021"];
@@ -57,6 +70,14 @@ function SectionHead({ icon, title, subtitle, action }) {
 export default function Page3() {
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [personalOpen, setPersonalOpen] = useState(false);
+
+  const selectedCompany = selectedExperience === null ? null : experience[selectedExperience].company;
+  const companyProjects = selectedCompany ? projects.filter(p => p.company === selectedCompany) : projects;
+  const companyEvidence = selectedCompany ? workEvidence.filter(item => item.company === selectedCompany) : workEvidence;
+  const featuredTitle = selectedCompany ? `${JOB_PROFILE.focusLabel} at ${selectedCompany}` : JOB_PROFILE.focusLabel;
+  const featuredSubtitle = selectedCompany
+    ? "Projects and proof connected to this specific role and company."
+    : `A ${JOB_PROFILE.category.toLowerCase()} profile, shaped around the work and evidence available.`;
 
   const goHome = () => { window.location.href = "/"; };
 
@@ -94,6 +115,16 @@ export default function Page3() {
           </aside>
         </section>
 
+        <section className="pdp3-card-section pdp3-snapshot" id="snapshot">
+          <SectionHead icon="✦" title="Career Snapshot" subtitle={`A quick view of ${JOB_PROFILE.title.toLowerCase()} experience before you explore the details.`} />
+          <div className="pdp3-snapshot-top">
+            <div><span className="pdp3-snapshot-eyebrow">ROLE PROFILE</span><h3>{JOB_PROFILE.title}</h3><p>{JOB_PROFILE.totalYears}+ years total experience · {JOB_PROFILE.category}</p></div>
+            <div className="pdp3-snapshot-total"><b>{JOB_PROFILE.totalYears}+</b><span>Years total experience</span></div>
+          </div>
+          <div className="pdp3-snapshot-grid">{JOB_PROFILE.snapshot.map(item => <article key={item.label}><div><strong>{item.value}</strong><span>{item.label}</span></div><p>{item.detail}</p></article>)}</div>
+          <div className="pdp3-snapshot-note"><span>↳</span><p>These figures are derived from the candidate's structured experience, skills and project history. Click a company below to see where the experience comes from.</p></div>
+        </section>
+
         <section className="pdp3-card-section" id="about">
           <SectionHead icon="♙" title="About Me" subtitle="The person behind the professional profile." />
           <div className="pdp3-about-grid"><div><h3>My Professional Story</h3><p>I'm a product designer who believes in the power of user empathy, clean design and continuous learning. Over the years, I've worked on products that solve real problems and create meaningful impact.</p><button className="pdp3-link-btn">View Full Story <Arrow /></button></div><div className="pdp3-stats"><div><b>8+</b><span>Years Experience</span></div><div><b>24</b><span>Projects Completed</span></div><div><b>12</b><span>Awards & Recognition</span></div><div><small>Currently</small><strong>Product Designer @ XYZ Technologies</strong></div><div><small>Specialization</small><strong>UX · Product · Design Systems</strong></div></div><Img src={IMAGES.about} alt="Working professionally" /></div>
@@ -105,13 +136,18 @@ export default function Page3() {
         </section>
 
         <section className="pdp3-card-section" id="projects">
-          <SectionHead icon="⌁" title="Featured Projects" subtitle="Real solutions. Measurable impact." action={{ target: "projects", label: "View All Projects" }} />
-          <div className="pdp3-project-grid">{projects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>Evidence</span></div></div></article>)}</div>
+          <SectionHead icon="⌁" title={featuredTitle} subtitle={featuredSubtitle} action={{ target: "projects", label: "View All Projects" }} />
+          <div className="pdp3-filter-state">
+            <span>{selectedCompany ? `Showing ${companyProjects.length} project${companyProjects.length === 1 ? "" : "s"} linked to ${selectedCompany}.` : "Showing the candidate's strongest work across their career."}</span>
+            {selectedCompany && <button onClick={() => setSelectedExperience(null)}>Show All Work ×</button>}
+          </div>
+          {companyProjects.length ? <div className="pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-empty-state"><strong>No project media added for this company yet.</strong><p>The profile automatically falls back to the candidate's role, contributions and verified experience instead of showing an empty section.</p></div>}
         </section>
 
         <section className="pdp3-card-section" id="proof">
           <SectionHead icon="▤" title="Work Evidence" subtitle="Videos, photos, presentations and more — real proof behind the profile." action={{ target: "proof", label: "View All Media" }} />
-          <div className="pdp3-media-grid">{workEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta}</span></div></article>)}</div>
+          <div className="pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div>
+          {!companyEvidence.length && <div className="pdp3-empty-state compact-empty"><strong>No media uploaded for this company yet.</strong><p>We'll keep the recruiter view useful with structured work information rather than empty media placeholders.</p></div>}
           <div className="pdp3-media-note"><span>Free PDP media guidance</span><b>Profile video up to 45 sec · Work videos up to 20 sec · 20 images</b></div>
         </section>
 
