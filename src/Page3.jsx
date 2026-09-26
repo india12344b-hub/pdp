@@ -13,25 +13,38 @@ function SectionHead({ icon, title, subtitle, action }) {
 export default function Page3() {
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [personalOpen, setPersonalOpen] = useState(false);
+  const [selectedSnapshot, setSelectedSnapshot] = useState(0);
 
-  const profile = PROFILE_DATA;
+  const {
+    profile,
+    experience = [],
+    projects = [],
+    workEvidence = [],
+    achievements = [],
+    credentials = [],
+    recommendations = [],
+    timeline = [],
+    personal = [],
+  } = PROFILE_DATA;
   const jobProfile = useMemo(() => getRoleProfile(profile), [profile.roleProfileId]);
-  const experience = profile.experience || [];
-  const projects = profile.projects || [];
-  const workEvidence = profile.workEvidence || [];
-  const achievements = profile.achievements || [];
-  const credentials = profile.credentials || [];
-  const recommendations = profile.recommendations || [];
-  const timeline = profile.timeline || [];
-  const personal = profile.personal || [];
 
   const selectedCompany = selectedExperience === null ? null : experience[selectedExperience].company;
   const companyProjects = selectedCompany ? projects.filter(p => p.company === selectedCompany) : projects;
   const companyEvidence = selectedCompany ? workEvidence.filter(item => item.company === selectedCompany) : workEvidence;
+  const snapshotItems = jobProfile.snapshot || [];
+  const activeSnapshot = snapshotItems[selectedSnapshot] || snapshotItems[0];
   const featuredTitle = selectedCompany ? `${jobProfile.focusLabel} at ${selectedCompany}` : jobProfile.focusLabel;
   const featuredSubtitle = selectedCompany
-    ? "Projects and proof connected to this specific role and company."
+    ? "Projects, proof and role context connected to this specific company."
     : `A ${jobProfile.category.toLowerCase()} profile, shaped around the work and evidence available.`;
+
+  const snapshotProjects = activeSnapshot?.relatedProjects?.length
+    ? projects.filter(p => activeSnapshot.relatedProjects.includes(p.title))
+    : [];
+  const snapshotEvidence = activeSnapshot?.relatedEvidence?.length
+    ? workEvidence.filter(item => activeSnapshot.relatedEvidence.includes(item.title))
+    : [];
+  const snapshotCompanies = activeSnapshot?.companies?.length ? activeSnapshot.companies : experience.map(item => item.company);
 
   const goHome = () => { window.location.href = "/"; };
 
@@ -70,13 +83,40 @@ export default function Page3() {
         </section>
 
         <section className="pdp3-card-section pdp3-snapshot" id="snapshot">
-          <SectionHead icon="✦" title="Career Snapshot" subtitle={`A quick view of ${jobProfile.title.toLowerCase()} experience before you explore the details.`} />
+          <SectionHead icon="✦" title="Career Snapshot" subtitle={`Dynamic ${jobProfile.category.toLowerCase()} view — select a skill or experience area to see the supporting work below.`} />
           <div className="pdp3-snapshot-top">
-            <div><span className="pdp3-snapshot-eyebrow">ROLE PROFILE</span><h3>{jobProfile.title}</h3><p>{jobProfile.totalYears}+ years total experience · {jobProfile.category}</p></div>
+            <div><span className="pdp3-snapshot-eyebrow">ROLE PROFILE · {jobProfile.sourceLabel || "PROFILE DATA"}</span><h3>{jobProfile.title}</h3><p>{jobProfile.totalYears}+ years total experience · {jobProfile.category}</p></div>
             <div className="pdp3-snapshot-total"><b>{jobProfile.totalYears}+</b><span>Years total experience</span></div>
           </div>
-          <div className="pdp3-snapshot-grid">{jobProfile.snapshot.map(item => <article key={item.label}><div><strong>{item.value}</strong><span>{item.label}</span></div><p>{item.detail}</p></article>)}</div>
-          <div className="pdp3-snapshot-note"><span>↳</span><p>These figures are derived from the candidate's structured experience, skills and project history. Click a company below to see where the experience comes from.</p></div>
+
+          <div className="pdp3-snapshot-tabs" role="tablist" aria-label="Career snapshot areas">
+            {snapshotItems.map((item, index) => (
+              <button key={item.label} className={`pdp3-snapshot-tab ${selectedSnapshot === index ? "active" : ""}`} onClick={() => setSelectedSnapshot(index)} role="tab" aria-selected={selectedSnapshot === index}>
+                <strong>{item.value}</strong><span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {activeSnapshot && (
+            <div className="pdp3-snapshot-detail">
+              <div className="pdp3-snapshot-detail-copy">
+                <span className="pdp3-detail-kicker">SELECTED AREA</span>
+                <h3>{activeSnapshot.label} · {activeSnapshot.value}</h3>
+                <p>{activeSnapshot.detail}</p>
+                <div className="pdp3-snapshot-companies"><span>Built across</span>{snapshotCompanies.map(company => <span key={company}>{company}</span>)}</div>
+              </div>
+              <div className="pdp3-snapshot-support">
+                {snapshotProjects.length > 0 && snapshotProjects.slice(0, 3).map(project => (
+                  <article key={project.title}><Img src={project.image} alt={project.title} /><div><strong>{project.title}</strong><span>{project.result}</span></div></article>
+                ))}
+                {snapshotEvidence.length > 0 && snapshotEvidence.slice(0, 3).map(item => (
+                  <article key={item.title}><Img src={item.image} alt={item.title} /><div><strong>{item.title}</strong><span>{item.meta} · {item.type}</span></div></article>
+                ))}
+                {!snapshotProjects.length && !snapshotEvidence.length && <article className="pdp3-snapshot-text-card"><div className="pdp3-icon">✓</div><div><strong>Resume / profile evidence</strong><span>{activeSnapshot.detail}</span></div></article>}
+              </div>
+            </div>
+          )}
+          <div className="pdp3-snapshot-note"><span>↳</span><p>This strip is role-profile driven today and is ready for resume-imported data later. The selected area controls the evidence shown below.</p></div>
         </section>
 
         <section className="pdp3-card-section" id="about">
@@ -86,7 +126,7 @@ export default function Page3() {
 
         <section className="pdp3-card-section" id="experience">
           <SectionHead icon="▣" title="Work Experience" subtitle="Professional journey and the roles I've played." action={{ target: "experience", label: "View All Experience" }} />
-          <div className="pdp3-experience-grid">{experience.map((item, i) => <article className={`pdp3-exp-card ${selectedExperience === i ? "selected" : ""}`} key={item.company} onClick={() => setSelectedExperience(selectedExperience === i ? null : i)}><div className="pdp3-exp-top"><Icon>{i === 0 ? "✦" : "▣"}</Icon><div><h3>{item.company}</h3><span>{item.role}</span></div><b>›</b></div><small>{item.years}</small><p>{item.desc}</p><div className="pdp3-chips">{item.tags.map(t => <span key={t}>{t}</span>)}</div>{selectedExperience === i && <div className="pdp3-exp-detail"><strong>Evidence attached</strong><p>Projects, work photos, videos and recommendations connected to this role.</p></div>}</article>)}</div>
+          <div className="pdp3-horizontal-scroll pdp3-experience-grid">{experience.map((item, i) => <article className={`pdp3-exp-card ${selectedExperience === i ? "selected" : ""}`} key={item.company} onClick={() => setSelectedExperience(selectedExperience === i ? null : i)}><div className="pdp3-exp-top"><Icon>{i === 0 ? "✦" : "▣"}</Icon><div><h3>{item.company}</h3><span>{item.role}</span></div><b>{selectedExperience === i ? "✓" : "›"}</b></div><small>{item.years}</small><p>{item.desc}</p><div className="pdp3-chips">{item.tags.map(t => <span key={t}>{t}</span>)}</div>{selectedExperience === i && <div className="pdp3-exp-detail"><strong>{companyProjects.length || companyEvidence.length ? "Evidence attached" : "Profile evidence"}</strong><p>{item.highlight || item.desc}</p></div>}</article>)}</div>
         </section>
 
         <section className="pdp3-card-section" id="projects">
@@ -95,13 +135,12 @@ export default function Page3() {
             <span>{selectedCompany ? `Showing ${companyProjects.length} project${companyProjects.length === 1 ? "" : "s"} linked to ${selectedCompany}.` : "Showing the candidate's strongest work across their career."}</span>
             {selectedCompany && <button onClick={() => setSelectedExperience(null)}>Show All Work ×</button>}
           </div>
-          {companyProjects.length ? <div className="pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-empty-state"><strong>No project media added for this company yet.</strong><p>The profile automatically falls back to the candidate's role, contributions and verified experience instead of showing an empty section.</p></div>}
+          {companyProjects.length ? <div className="pdp3-horizontal-scroll pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-company-fallback"><div className="pdp3-company-fallback-head"><Icon>▣</Icon><div><span className="pdp3-detail-kicker">ROLE / RESUME EVIDENCE</span><h3>{selectedCompany ? `${selectedCompany} · ${experience[selectedExperience]?.role || "Role"}` : "Career work evidence"}</h3></div></div><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Structured role information and candidate-uploaded project media will appear here."}</p><div className="pdp3-chips">{(experience[selectedExperience]?.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div><small>Media can be added later; recruiters still see the candidate's role, contribution and skills instead of an empty Featured Work area.</small></div>}
         </section>
 
         <section className="pdp3-card-section" id="proof">
           <SectionHead icon="▤" title={jobProfile.sections.proof} subtitle="Videos, photos, presentations and more — real proof behind the profile." action={{ target: "proof", label: "View All Media" }} />
-          <div className="pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div>
-          {!companyEvidence.length && <div className="pdp3-empty-state compact-empty"><strong>No media uploaded for this company yet.</strong><p>We'll keep the recruiter view useful with structured work information rather than empty media placeholders.</p></div>}
+          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p><small>Nothing is lost: structured experience remains visible until media is added.</small></div>}
           <div className="pdp3-media-note"><span>Free PDP media guidance</span><b>Profile video up to 45 sec · Work videos up to 20 sec · 20 images</b></div>
         </section>
 

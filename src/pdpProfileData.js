@@ -12,6 +12,7 @@ export const ROLE_PROFILES = {
     title: "Product Designer",
     totalYears: 8,
     focusLabel: "Featured Work",
+    sourceLabel: "ROLE + RESUME",
     sections: {
       projects: "Featured Work",
       proof: "Work Evidence",
@@ -21,11 +22,11 @@ export const ROLE_PROFILES = {
       journey: "Career Journey",
     },
     snapshot: [
-      { label: "Product Design", value: "8 yrs", detail: "Across XYZ Technologies, ABC Digital and Creative Labs" },
-      { label: "UX / Research", value: "7 yrs", detail: "User research, journeys, usability and product discovery" },
-      { label: "Design Systems", value: "5 yrs", detail: "Scalable UI systems and component libraries" },
-      { label: "Leadership", value: "4 yrs", detail: "Mentoring designers and leading cross-functional work" },
-      { label: "Figma", value: "6 yrs", detail: "Advanced product design, prototyping and collaboration" },
+      { label: "Product Design", value: "8 yrs", detail: "Across XYZ Technologies, ABC Digital and Creative Labs", companies: ["XYZ Technologies", "ABC Digital", "Creative Labs"], relatedProjects: ["Smart Inventory System", "HealthTrack App", "eCommerce Platform"], relatedEvidence: ["Project Walkthrough", "Design Presentation"] },
+      { label: "UX / Research", value: "7 yrs", detail: "User research, journeys, usability and product discovery", companies: ["XYZ Technologies", "ABC Digital", "NextGen Solutions"], relatedProjects: ["HealthTrack App", "eCommerce Platform"], relatedEvidence: ["Project Walkthrough", "Design Presentation"] },
+      { label: "Design Systems", value: "5 yrs", detail: "Scalable UI systems and component libraries", companies: ["XYZ Technologies", "ABC Digital"], relatedProjects: ["Smart Inventory System"], relatedEvidence: ["Project Walkthrough"] },
+      { label: "Leadership", value: "4 yrs", detail: "Mentoring designers and leading cross-functional work", companies: ["XYZ Technologies"], relatedProjects: ["Smart Inventory System"], relatedEvidence: ["Team Collaboration"] },
+      { label: "Figma", value: "6 yrs", detail: "Advanced product design, prototyping and collaboration", companies: ["XYZ Technologies", "ABC Digital", "Creative Labs"], relatedProjects: ["Smart Inventory System", "HealthTrack App", "eCommerce Platform"], relatedEvidence: ["Design Presentation"] },
     ],
   },
   "sales": {
@@ -33,6 +34,7 @@ export const ROLE_PROFILES = {
     title: "Sales Leader",
     totalYears: 12,
     focusLabel: "Business Impact",
+    sourceLabel: "ROLE + RESUME",
     sections: { projects: "Business Impact", proof: "Sales Evidence", achievements: "Sales Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Career Journey" },
     snapshot: [
       { label: "Enterprise Sales", value: "10 yrs", detail: "Large-account and complex B2B sales across multiple companies" },
@@ -47,6 +49,7 @@ export const ROLE_PROFILES = {
     title: "Software Engineer",
     totalYears: 9,
     focusLabel: "Featured Projects",
+    sourceLabel: "ROLE + RESUME",
     sections: { projects: "Featured Projects", proof: "Technical Evidence", achievements: "Engineering Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Engineering Journey" },
     snapshot: [
       { label: "Software Engineering", value: "9 yrs", detail: "Product and platform engineering across multiple organizations" },
@@ -61,6 +64,7 @@ export const ROLE_PROFILES = {
     title: "Marketing & Brand Leader",
     totalYears: 11,
     focusLabel: "Campaign Highlights",
+    sourceLabel: "ROLE + RESUME",
     sections: { projects: "Campaign Highlights", proof: "Marketing Evidence", achievements: "Marketing Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Marketing Journey" },
     snapshot: [
       { label: "Brand Development", value: "8 yrs", detail: "Brand strategy, positioning and identity across companies" },
@@ -75,6 +79,7 @@ export const ROLE_PROFILES = {
     title: "Educator & Academic Professional",
     totalYears: 14,
     focusLabel: "Teaching Highlights",
+    sourceLabel: "ROLE + RESUME",
     sections: { projects: "Teaching Highlights", proof: "Teaching Evidence", achievements: "Academic Achievements", credentials: "Credentials", people: "Students & Colleagues", journey: "Teaching Journey" },
     snapshot: [
       { label: "Teaching", value: "14 yrs", detail: "Classroom, mentoring and academic program experience" },
@@ -104,10 +109,10 @@ export const PROFILE_DATA = {
     stats: { experience: "8+", projects: 24, awards: 12, current: "Product Designer @ XYZ Technologies", specialization: "UX · Product · Design Systems" },
   },
   experience: [
-    { company: "XYZ Technologies", role: "Product Designer", years: "2021 — Present · 4 years", desc: "Enterprise SaaS products focused on improving user experience and product growth.", tags: ["Product", "UX", "Leadership"] },
-    { company: "ABC Digital", role: "UI/UX Designer", years: "2018 — 2021 · 3 years", desc: "Designed user interfaces for web and mobile applications, working closely with product and engineering.", tags: ["UI/UX", "Research"] },
-    { company: "Creative Labs", role: "Junior Designer", years: "2016 — 2018 · 2 years", desc: "Created visual designs and supported product design teams across projects and campaigns.", tags: ["Visual", "Brand"] },
-    { company: "NextGen Solutions", role: "Design Intern", years: "2015 — 2016 · 1 year", desc: "Assisted in design research, wireframing and prototyping for digital products.", tags: ["Research", "Prototype"] },
+    { company: "XYZ Technologies", role: "Product Designer", years: "2021 — Present · 4 years", desc: "Enterprise SaaS products focused on improving user experience and product growth.", highlight: "Led product design from discovery through delivery, including user research, scalable UI systems and cross-functional product decisions.", tags: ["Product", "UX", "Leadership"] },
+    { company: "ABC Digital", role: "UI/UX Designer", years: "2018 — 2021 · 3 years", desc: "Designed user interfaces for web and mobile applications, working closely with product and engineering.", highlight: "Owned interface design, usability improvements and product collaboration across web and mobile experiences.", tags: ["UI/UX", "Research"] },
+    { company: "Creative Labs", role: "Junior Designer", years: "2016 — 2018 · 2 years", desc: "Created visual designs and supported product design teams across projects and campaigns.", highlight: "Built visual design foundations, supported campaign work and developed early product-design skills across multiple briefs.", tags: ["Visual", "Brand"] },
+    { company: "NextGen Solutions", role: "Design Intern", years: "2015 — 2016 · 1 year", desc: "Assisted in design research, wireframing and prototyping for digital products.", highlight: "Supported design research, wireframes and prototypes for digital products — the profile's structured role evidence remains visible even when no project media is uploaded.", tags: ["Research", "Prototype"] },
   ],
   projects: [
     { company: "XYZ Technologies", title: "Smart Inventory System", result: "Reduced stock errors by 28%", role: "Product Design", image: IMAGES.project1, evidence: ["Project walkthrough", "6 work photos"] },
@@ -130,4 +135,13 @@ export const PROFILE_DATA = {
   ],
 };
 
-export const getRoleProfile = (profile) => ROLE_PROFILES[profile.roleProfileId] || ROLE_PROFILES["product-design"];
+export const getRoleProfile = (profile) => {
+  if (profile?.roleProfileId && ROLE_PROFILES[profile.roleProfileId]) return ROLE_PROFILES[profile.roleProfileId];
+
+  const text = [profile?.role, ...(profile?.skills || []), profile?.about].filter(Boolean).join(" ").toLowerCase();
+  if (/sales|business development|account manager|revenue/.test(text)) return ROLE_PROFILES.sales;
+  if (/software|developer|engineer|frontend|backend|full stack|devops|cloud/.test(text)) return ROLE_PROFILES["software-engineering"];
+  if (/marketing|brand|growth|digital marketing|campaign/.test(text)) return ROLE_PROFILES.marketing;
+  if (/teacher|educator|academic|professor|faculty|teaching/.test(text)) return ROLE_PROFILES.education;
+  return ROLE_PROFILES["product-design"];
+};
