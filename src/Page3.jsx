@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { PROFILE_DATA, getRoleProfile } from "./pdpProfileData";
+import { IMAGES } from "./pdpMedia";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
