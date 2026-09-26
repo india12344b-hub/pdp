@@ -49,7 +49,7 @@ export default function Page3() {
 
         <section className="pdp3-hero" id="overview">
           <div className="pdp3-video-card">
-            <Img src={IMAGES.hero} alt="{profile.name}" />
+            <Img src={IMAGES.hero} alt={profile.name} />
             <div className="pdp3-video-overlay"><button className="pdp3-play" aria-label="Play career introduction">▶</button><div><strong>Career Introduction</strong><span>0:38 · Watch my story</span></div></div>
             <div className="pdp3-video-badge">REAL PERSON · REAL STORY</div>
           </div>
@@ -108,7 +108,7 @@ export default function Page3() {
         <section className="pdp3-three-grid">
           <div className="pdp3-card-section compact"><SectionHead icon="🏆" title="Achievements" subtitle="Recognition for my work and impact." /><ul>{achievements.map(x => <li key={x}><Icon>★</Icon><span>{x}</span><b>›</b></li>)}</ul></div>
           <div className="pdp3-card-section compact"><SectionHead icon="▣" title="Credentials" subtitle="Certifications and formal education." /><ul>{credentials.map(x => <li key={x}><Icon>✓</Icon><span>{x}</span><b>›</b></li>)}</ul></div>
-          <div className="pdp3-card-section compact"><SectionHead icon="♧" title="People I Worked With" subtitle="Recommendations from colleagues and managers." /><div className="pdp3-recommendation"><div className="pdp3-reco-head"><Img src={IMAGES.selfie1} alt="{recommendations[0]?.name || "Recommendation"}" /><div><strong>Rohit Mehta</strong><span>{recommendations[0]?.role || "Professional connection"}</span></div></div><p>“{recommendations[0]?.text || "Recommendations will appear here when added."}”</p><div className="pdp3-stars">★★★★★</div></div></div>
+          <div className="pdp3-card-section compact"><SectionHead icon="♧" title="People I Worked With" subtitle="Recommendations from colleagues and managers." /><div className="pdp3-recommendation"><div className="pdp3-reco-head"><Img src={IMAGES.selfie1} alt={recommendations[0]?.name || "Recommendation"} /><div><strong>Rohit Mehta</strong><span>{recommendations[0]?.role || "Professional connection"}</span></div></div><p>“{recommendations[0]?.text || "Recommendations will appear here when added."}”</p><div className="pdp3-stars">★★★★★</div></div></div>
         </section>
 
         <section className="pdp3-card-section pdp3-timeline-section" id="journey"><SectionHead icon="◉" title="Career Journey" subtitle="Key milestones in my professional journey." /><div className="pdp3-timeline">{timeline.map(([year,title,desc]) => <div key={year} className="pdp3-milestone"><span className="pdp3-dot" /><strong>{year}</strong><b>{title}</b><small>{desc}</small></div>)}</div></section>
