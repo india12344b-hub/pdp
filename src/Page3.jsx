@@ -127,13 +127,13 @@ export default function Page3() {
         </section>
 
         <section className="pdp3-card-section pdp3-shortlist" id="shortlist">
-          <SectionHead icon="⌕" title="Recruiter Shortlist" subtitle="Experience filters generated from the candidate's role, resume and industry context." />
-          <div className="pdp3-shortlist-note"><span>ROLE + RESUME + INDUSTRY</span><p>Select a specific experience area to surface the companies and evidence most relevant to it.</p></div>
-          <div className="pdp3-shortlist-tabs" role="tablist" aria-label="Recruiter shortlist filters">
+          <SectionHead icon="⌕" title="Relevant Experience" subtitle="Role-aware experience areas generated from the candidate's profile, resume and industry context." />
+          <div className="pdp3-shortlist-note"><span>ROLE + RESUME + INDUSTRY</span><p>Select an experience area to surface the companies and evidence most relevant to it.</p></div>
+          <div className="pdp3-shortlist-tabs" role="tablist" aria-label="Relevant experience filters">
             {shortlistTools.map(tool => <button key={tool} className={`pdp3-shortlist-tab ${selectedShortlist === tool ? "active" : ""}`} onClick={() => setSelectedShortlist(selectedShortlist === tool ? null : tool)}>{tool}<b>›</b></button>)}
           </div>
           <div className="pdp3-shortlist-results">
-            {(shortlistMatches.length ? shortlistMatches : []).map(item => <article key={item.company} className="pdp3-shortlist-result"><div><strong>{item.company}</strong><span>{item.role}</span></div><small>{item.years}</small><p>{item.highlight || item.desc}</p><div className="pdp3-chips">{(item.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></article>)}
+            {(shortlistMatches.length ? shortlistMatches : []).map(item => <article key={item.company} className="pdp3-shortlist-result"><div><strong>{item.company}</strong><span>{item.role}</span></div><small>{item.years}</small><p>{item.highlight || item.desc}</p><div className="pdp3-chips">{(item.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div><button className="pdp3-result-detail" onClick={() => { const index = experience.findIndex(exp => exp.company === item.company); if (index >= 0) setSelectedExperience(index); requestAnimationFrame(() => document.getElementById("experience")?.scrollIntoView({ behavior: "smooth", block: "start" })); }}>View Experience Details →</button></article>)}
             {!shortlistMatches.length && selectedShortlist && <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO DIRECT EXPERIENCE DOCUMENTED</span><h3>{selectedShortlist}</h3><p>{getShortlistFallback(selectedShortlist)}</p></div>}
           </div>
         </section>
