@@ -206,7 +206,7 @@ export default function Page2() {
           <div className="pd2-no">03</div>
           <div>
             <h2>Control Your Narrative with Context</h2>
-            <p>Organize your work samples into structured evidence cards that tell a complete story.</p>
+            <p>Organize your work samples into structured cards that tell a complete story.</p>
           </div>
         </div>
 
