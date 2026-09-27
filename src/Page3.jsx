@@ -83,9 +83,9 @@ export default function Page3() {
         </section>
 
         <section className="pdp3-card-section pdp3-snapshot" id="snapshot">
-          <SectionHead icon="✦" title="Career Snapshot" subtitle={`Dynamic ${jobProfile.category.toLowerCase()} view — select a skill or experience area to see the supporting work below.`} />
+          <SectionHead icon="✦" title="Career Snapshot" subtitle="Select a skill or experience area to see the supporting work below." />
           <div className="pdp3-snapshot-top">
-            <div><span className="pdp3-snapshot-eyebrow">ROLE PROFILE · {jobProfile.sourceLabel || "PROFILE DATA"}</span><h3>{jobProfile.title}</h3><p>{jobProfile.totalYears}+ years total experience · {jobProfile.category}</p></div>
+            <div><h3>{jobProfile.title}</h3><p>{jobProfile.totalYears}+ years total experience · {jobProfile.category}</p></div>
             <div className="pdp3-snapshot-total"><b>{jobProfile.totalYears}+</b><span>Years total experience</span></div>
           </div>
 
@@ -116,7 +116,6 @@ export default function Page3() {
               </div>
             </div>
           )}
-          <div className="pdp3-snapshot-note"><span>↳</span><p>This strip is role-profile driven today and is ready for resume-imported data later. The selected area controls the evidence shown below.</p></div>
         </section>
 
         <section className="pdp3-card-section" id="about">
@@ -135,13 +134,12 @@ export default function Page3() {
             <span>{selectedCompany ? `Showing ${companyProjects.length} project${companyProjects.length === 1 ? "" : "s"} linked to ${selectedCompany}.` : "Showing the candidate's strongest work across their career."}</span>
             {selectedCompany && <button onClick={() => setSelectedExperience(null)}>Show All Work ×</button>}
           </div>
-          {companyProjects.length ? <div className="pdp3-horizontal-scroll pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-company-fallback"><div className="pdp3-company-fallback-head"><Icon>▣</Icon><div><span className="pdp3-detail-kicker">ROLE / RESUME EVIDENCE</span><h3>{selectedCompany ? `${selectedCompany} · ${experience[selectedExperience]?.role || "Role"}` : "Career work evidence"}</h3></div></div><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Structured role information and candidate-uploaded project media will appear here."}</p><div className="pdp3-chips">{(experience[selectedExperience]?.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div><small>Media can be added later; recruiters still see the candidate's role, contribution and skills instead of an empty Featured Work area.</small></div>}
+          {companyProjects.length ? <div className="pdp3-horizontal-scroll pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-company-fallback"><div className="pdp3-company-fallback-head"><Icon>▣</Icon><div><span className="pdp3-detail-kicker">ROLE / RESUME EVIDENCE</span><h3>{selectedCompany ? `${selectedCompany} · ${experience[selectedExperience]?.role || "Role"}` : "Career work evidence"}</h3></div></div><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Structured role information and candidate-uploaded project media will appear here."}</p><div className="pdp3-chips">{(experience[selectedExperience]?.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></div>}
         </section>
 
         <section className="pdp3-card-section" id="proof">
           <SectionHead icon="▤" title={jobProfile.sections.proof} subtitle="Videos, photos, presentations and more — real proof behind the profile." action={{ target: "proof", label: "View All Media" }} />
-          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p><small>Nothing is lost: structured experience remains visible until media is added.</small></div>}
-          <div className="pdp3-media-note"><span>Free PDP media guidance</span><b>Profile video up to 45 sec · Work videos up to 20 sec · 20 images</b></div>
+          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p></div>}
         </section>
 
         <section className="pdp3-three-grid">
@@ -159,8 +157,8 @@ export default function Page3() {
         </section>
 
         <section className="pdp3-bottom-grid" id="contact">
-          <div className="pdp3-card-section"><SectionHead icon="⌁" title="One Link. My Professional Story." subtitle="Share my PDP anywhere — resume, LinkedIn, email, WhatsApp or QR code." /><div className="pdp3-url"><span>↗</span><strong>{profile.pdpUrl}</strong><button>⧉</button></div></div>
-          <div className="pdp3-card-section"><SectionHead icon="✦" title="Let's Connect" subtitle="Feel free to reach out — I'm open to new opportunities, collaborations and exciting projects." /><div className="pdp3-contact-actions"><button>☎ Call</button><button>◉ WhatsApp</button><button>✉ Email</button><button>in LinkedIn</button></div><div className="pdp3-privacy">🔒 Contact details are shared only according to the candidate's visibility settings.</div></div>
+          <div className="pdp3-card-section"><SectionHead icon="⌁" title="One Link for my Professional Story." subtitle="Share PDP link anywhere — resume, LinkedIn, email, WhatsApp or QR code." /><div className="pdp3-url"><span>↗</span><strong>{profile.pdpUrl}</strong><button>⧉</button></div></div>
+          <div className="pdp3-card-section"><SectionHead icon="✦" title="Let's Connect" subtitle="Feel free to reach out — I'm open to new opportunities, collaborations and exciting projects." /><div className="pdp3-contact-actions"><button>☎ Call</button><button>◉ WhatsApp</button><button>✉ Email</button><button>in LinkedIn</button></div></div>
         </section>
 
         <footer className="pdp3-footer"><button className="pdp3-brand" onClick={goHome}><span className="pdp3-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></button><div><strong>Build your professional presence.</strong><br /><span>Showcase your work. Get discovered.</span></div><nav><a href="/" onClick={(e)=>{e.preventDefault();goHome();}}>Home</a><a href="/professionals">For Professionals</a><a href="#contact">Contact</a></nav></footer>
