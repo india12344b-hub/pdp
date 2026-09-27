@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { PROFILE_DATA, getRoleProfile } from "./pdpProfileData";
+import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
@@ -14,6 +14,7 @@ export default function Page3() {
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [selectedSnapshot, setSelectedSnapshot] = useState(0);
+  const [selectedShortlist, setSelectedShortlist] = useState(null);
 
   const {
     profile,
@@ -45,6 +46,22 @@ export default function Page3() {
     ? workEvidence.filter(item => activeSnapshot.relatedEvidence.includes(item.title))
     : [];
   const snapshotCompanies = activeSnapshot?.companies?.length ? activeSnapshot.companies : experience.map(item => item.company);
+  const shortlistTools = useMemo(() => buildShortlistTools(profile, jobProfile, experience), [profile, jobProfile, experience]);
+  const shortlistMatches = selectedShortlist
+    ? experience.filter(item => {
+        const haystack = [item.role, item.desc, item.highlight, ...(item.tags || [])].filter(Boolean).join(" ").toLowerCase();
+        const key = selectedShortlist.toLowerCase();
+        const aliases = {
+          "distributor management": ["distributor", "distribution", "channel"],
+          "btl / trade activation": ["btl", "trade activation", "activation"],
+          "product launch": ["launch", "new product", "product launch"],
+          "new market development": ["new market", "market expansion", "territory"],
+          "channel development": ["channel", "distribution", "distributor"],
+          "key accounts": ["key account", "enterprise", "strategic account"],
+        };
+        return (aliases[key] || [key]).some(term => haystack.includes(term));
+      })
+    : experience;
 
   const goHome = () => { window.location.href = "/"; };
 
@@ -116,6 +133,18 @@ export default function Page3() {
               </div>
             </div>
           )}
+        </section>
+
+        <section className="pdp3-card-section pdp3-shortlist" id="shortlist">
+          <SectionHead icon="⌕" title="Recruiter Shortlist" subtitle="Experience filters generated from the candidate's role, resume and industry context." />
+          <div className="pdp3-shortlist-note"><span>ROLE + RESUME + INDUSTRY</span><p>Select a specific experience area to surface the companies and evidence most relevant to it.</p></div>
+          <div className="pdp3-shortlist-tabs" role="tablist" aria-label="Recruiter shortlist filters">
+            {shortlistTools.map(tool => <button key={tool} className={`pdp3-shortlist-tab ${selectedShortlist === tool ? "active" : ""}`} onClick={() => setSelectedShortlist(selectedShortlist === tool ? null : tool)}>{tool}<b>›</b></button>)}
+          </div>
+          <div className="pdp3-shortlist-results">
+            {(shortlistMatches.length ? shortlistMatches : []).map(item => <article key={item.company} className="pdp3-shortlist-result"><div><strong>{item.company}</strong><span>{item.role}</span></div><small>{item.years}</small><p>{item.highlight || item.desc}</p><div className="pdp3-chips">{(item.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></article>)}
+            {!shortlistMatches.length && <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO DIRECT MATCH YET</span><h3>Resume evidence can be added</h3><p>This filter is available for the role/industry, but the candidate's current profile does not yet contain matching evidence.</p></div>}
+          </div>
         </section>
 
         <section className="pdp3-card-section" id="about">

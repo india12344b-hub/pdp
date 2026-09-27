@@ -13,6 +13,7 @@ export const ROLE_PROFILES = {
     totalYears: 8,
     focusLabel: "Featured Work",
     sourceLabel: "ROLE + RESUME",
+    shortlistTools: ["Product Design", "UX / Research", "Design Systems", "Prototyping", "Cross-functional Leadership"],
     sections: {
       projects: "Featured Work",
       proof: "Work Evidence",
@@ -35,6 +36,7 @@ export const ROLE_PROFILES = {
     totalYears: 12,
     focusLabel: "Business Impact",
     sourceLabel: "ROLE + RESUME",
+    shortlistTools: ["FMCG", "Distributor Management", "BTL / Trade Activation", "Product Launch", "New Market Development", "Channel Development", "Key Accounts", "GTM"],
     sections: { projects: "Business Impact", proof: "Sales Evidence", achievements: "Sales Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Career Journey" },
     snapshot: [
       { label: "Enterprise Sales", value: "10 yrs", detail: "Large-account and complex B2B sales across multiple companies" },
@@ -50,6 +52,7 @@ export const ROLE_PROFILES = {
     totalYears: 9,
     focusLabel: "Featured Projects",
     sourceLabel: "ROLE + RESUME",
+    shortlistTools: ["JavaScript / TypeScript", "Cloud", "Architecture", "APIs", "Team Leadership"],
     sections: { projects: "Featured Projects", proof: "Technical Evidence", achievements: "Engineering Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Engineering Journey" },
     snapshot: [
       { label: "Software Engineering", value: "9 yrs", detail: "Product and platform engineering across multiple organizations" },
@@ -65,6 +68,7 @@ export const ROLE_PROFILES = {
     totalYears: 11,
     focusLabel: "Campaign Highlights",
     sourceLabel: "ROLE + RESUME",
+    shortlistTools: ["Brand Development", "Digital Marketing", "GTM", "Product Launch", "Market Expansion", "Campaign Leadership"],
     sections: { projects: "Campaign Highlights", proof: "Marketing Evidence", achievements: "Marketing Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Marketing Journey" },
     snapshot: [
       { label: "Brand Development", value: "8 yrs", detail: "Brand strategy, positioning and identity across companies" },
@@ -80,6 +84,7 @@ export const ROLE_PROFILES = {
     totalYears: 14,
     focusLabel: "Teaching Highlights",
     sourceLabel: "ROLE + RESUME",
+    shortlistTools: ["Teaching", "Subject Expertise", "Student Mentoring", "Academic Leadership", "Digital Teaching"],
     sections: { projects: "Teaching Highlights", proof: "Teaching Evidence", achievements: "Academic Achievements", credentials: "Credentials", people: "Students & Colleagues", journey: "Teaching Journey" },
     snapshot: [
       { label: "Teaching", value: "14 yrs", detail: "Classroom, mentoring and academic program experience" },
@@ -133,6 +138,24 @@ export const PROFILE_DATA = {
     { title: "Family", text: "The people behind my values, resilience and perspective.", image: IMAGES.family },
     { title: "Outside Work", text: "Travel, photography, design inspiration and discovering new places.", image: IMAGES.selfie1 },
   ],
+};
+
+export const buildShortlistTools = (profile, roleProfile, experience = []) => {
+  const text = [profile?.role, ...(profile?.skills || []), profile?.about, ...experience.map(item => [item.role, item.desc, item.highlight, ...(item.tags || [])].join(" "))].filter(Boolean).join(" ").toLowerCase();
+  const defaults = roleProfile?.shortlistTools || roleProfile?.snapshot?.map(item => item.label) || [];
+  const aliases = {
+    "distributor management": ["distributor", "distribution", "channel"],
+    "btl / trade activation": ["btl", "trade activation", "activation"],
+    "product launch": ["launch", "new product", "product launch"],
+    "new market development": ["new market", "market expansion", "territory"],
+    "channel development": ["channel", "distribution", "distributor"],
+    "key accounts": ["key account", "enterprise", "strategic account"],
+    "market expansion": ["market expansion", "new market", "territory"],
+  };
+  const resumeDerived = Object.entries(aliases)
+    .filter(([label, keys]) => keys.some(key => text.includes(key)))
+    .map(([label]) => label.replace(/\b\w/g, ch => ch.toUpperCase()));
+  return [...new Set([...defaults, ...resumeDerived])];
 };
 
 export const getRoleProfile = (profile) => {
