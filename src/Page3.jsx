@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
+import { PROFILE_DATA, getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
@@ -49,17 +49,8 @@ export default function Page3() {
   const shortlistTools = useMemo(() => buildShortlistTools(profile, jobProfile, experience), [profile, jobProfile, experience]);
   const shortlistMatches = selectedShortlist
     ? experience.filter(item => {
-        const haystack = [item.role, item.desc, item.highlight, ...(item.tags || [])].filter(Boolean).join(" ").toLowerCase();
-        const key = selectedShortlist.toLowerCase();
-        const aliases = {
-          "distributor management": ["distributor", "distribution", "channel"],
-          "btl / trade activation": ["btl", "trade activation", "activation"],
-          "product launch": ["launch", "new product", "product launch"],
-          "new market development": ["new market", "market expansion", "territory"],
-          "channel development": ["channel", "distribution", "distributor"],
-          "key accounts": ["key account", "enterprise", "strategic account"],
-        };
-        return (aliases[key] || [key]).some(term => haystack.includes(term));
+        const haystack = [item.company, item.role, item.desc, item.highlight, ...(item.tags || [])].filter(Boolean).join(" ").toLowerCase();
+        return getShortlistTerms(selectedShortlist).some(term => haystack.includes(term));
       })
     : experience;
 
@@ -143,7 +134,7 @@ export default function Page3() {
           </div>
           <div className="pdp3-shortlist-results">
             {(shortlistMatches.length ? shortlistMatches : []).map(item => <article key={item.company} className="pdp3-shortlist-result"><div><strong>{item.company}</strong><span>{item.role}</span></div><small>{item.years}</small><p>{item.highlight || item.desc}</p><div className="pdp3-chips">{(item.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></article>)}
-            {!shortlistMatches.length && <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO DIRECT MATCH YET</span><h3>Resume evidence can be added</h3><p>This filter is available for the role/industry, but the candidate's current profile does not yet contain matching evidence.</p></div>}
+            {!shortlistMatches.length && selectedShortlist && <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO DIRECT EXPERIENCE DOCUMENTED</span><h3>{selectedShortlist}</h3><p>{getShortlistFallback(selectedShortlist)}</p></div>}
           </div>
         </section>
 

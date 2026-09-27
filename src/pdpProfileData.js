@@ -140,19 +140,39 @@ export const PROFILE_DATA = {
   ],
 };
 
+export const SHORTLIST_ALIASES = {
+  "product design": ["product designer", "product design", "product"],
+  "ux / research": ["ux", "user experience", "research", "usability", "discovery"],
+  "design systems": ["design system", "design systems", "component library", "ui system"],
+  "prototyping": ["prototype", "prototyping", "wireframe", "wireframing"],
+  "cross-functional leadership": ["cross-functional", "cross functional", "leadership", "led", "mentor", "team"],
+  "distributor management": ["distributor", "distribution", "channel"],
+  "btl / trade activation": ["btl", "trade activation", "activation"],
+  "product launch": ["launch", "new product", "product launch"],
+  "new market development": ["new market", "market expansion", "territory"],
+  "channel development": ["channel", "distribution", "distributor"],
+  "key accounts": ["key account", "enterprise", "strategic account"],
+  "gtm": ["gtm", "go-to-market", "go to market"],
+  "fmcg": ["fmcg", "fast moving consumer", "consumer goods"],
+};
+
+export const getShortlistTerms = (label) => SHORTLIST_ALIASES[String(label || "").toLowerCase()] || [String(label || "").toLowerCase()];
+
+export const getShortlistFallback = (label) => {
+  const key = String(label || "").toLowerCase();
+  const copy = {
+    "cross-functional leadership": "Sorry, I don't have direct experience documented in this area yet, but I am capable of learning fast, collaborating across teams and executing with ownership.",
+    "ux / research": "UX / Research experience is not yet documented against a specific role. Relevant UX evidence can be added from the candidate's resume or work proof.",
+    "design systems": "Design Systems experience is not yet documented against a specific role. Relevant systems, libraries or component-work evidence can be added.",
+    "prototyping": "Prototyping experience is not yet documented against a specific role. Relevant wireframes, prototypes or walkthroughs can be added.",
+  };
+  return copy[key] || `This experience area is relevant to the candidate's role, but direct evidence is not documented in the current profile yet. The candidate can add supporting resume or work proof.`;
+};
+
 export const buildShortlistTools = (profile, roleProfile, experience = []) => {
   const text = [profile?.role, ...(profile?.skills || []), profile?.about, ...experience.map(item => [item.role, item.desc, item.highlight, ...(item.tags || [])].join(" "))].filter(Boolean).join(" ").toLowerCase();
   const defaults = roleProfile?.shortlistTools || roleProfile?.snapshot?.map(item => item.label) || [];
-  const aliases = {
-    "distributor management": ["distributor", "distribution", "channel"],
-    "btl / trade activation": ["btl", "trade activation", "activation"],
-    "product launch": ["launch", "new product", "product launch"],
-    "new market development": ["new market", "market expansion", "territory"],
-    "channel development": ["channel", "distribution", "distributor"],
-    "key accounts": ["key account", "enterprise", "strategic account"],
-    "market expansion": ["market expansion", "new market", "territory"],
-  };
-  const resumeDerived = Object.entries(aliases)
+  const resumeDerived = Object.entries(SHORTLIST_ALIASES)
     .filter(([label, keys]) => keys.some(key => text.includes(key)))
     .map(([label]) => label.replace(/\b\w/g, ch => ch.toUpperCase()));
   return [...new Set([...defaults, ...resumeDerived])];
