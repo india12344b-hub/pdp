@@ -105,9 +105,7 @@ export default function RecruiterPage() {
           <div className="requirement-box">
             <label htmlFor="job-requirement">JOB REQUIREMENT</label>
             <textarea id="job-requirement" value={requirement} onChange={e => setRequirement(e.target.value)} placeholder="Paste a job description or describe what you are looking for…\nExample: FMCG business development professional with distributor management, product launch and new market development experience." />
-            <div className="requirement-actions">
-              <button onClick={() => { setRequirement("FMCG Business Development professional with distributor management, product launch and new market development experience."); setActiveFilters([]); }}>Try FMCG Example →</button>
-            </div>
+            <div className="requirement-actions"><span>Discovery is currently deterministic — no AI/API required.</span><button onClick={() => { setRequirement("FMCG Business Development professional with distributor management, product launch and new market development experience."); setActiveFilters([]); }}>Try FMCG Example →</button></div>
           </div>
 
           {(suggestedFilters.length > 0 || activeFilters.length > 0) && <section className="requirement-results">
@@ -131,6 +129,7 @@ export default function RecruiterPage() {
             </article>)}
           </div>
           {candidates.length === 0 && <div className="empty-state">No sample profile matches this requirement yet. Try broader experience terms.</div>}
+          <p className="demo-note">Demo discovery data only. Candidate claims, experience and proof will come from real PDP profiles after authentication and backend connection.</p>
         </section>
 
         <section className="recruiter-flow" id="how"><div><div className="section-kicker">THE PDP RECRUITER FLOW</div><h2>Requirement → Experience → Proof → Contact</h2></div><div className="flow-cards"><div><b>01</b><strong>Describe the need</strong><span>Paste a JD or define the role.</span></div><div><b>02</b><strong>Find relevant experience</strong><span>Use role and industry evidence.</span></div><div><b>03</b><strong>Open the PDP</strong><span>Review projects, videos and work proof.</span></div><div><b>04</b><strong>Shortlist & connect</strong><span>Save or contact the professional.</span></div></div></section>
