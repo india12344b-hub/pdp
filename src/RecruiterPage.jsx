@@ -3,14 +3,14 @@ import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileD
 
 const DEMO_CANDIDATES = [
   {
-    ...PROFILE_DATA,
+    ...PROFILE_DATA.profile,
     id: "ananya-demo",
-    name: PROFILE_DATA.name,
-    role: PROFILE_DATA.role,
-    location: PROFILE_DATA.location,
+    name: PROFILE_DATA.profile.name,
+    role: PROFILE_DATA.profile.role,
+    location: PROFILE_DATA.profile.location,
     industry: "Design / Product",
-    stats: { ...PROFILE_DATA.stats, experience: PROFILE_DATA.stats?.experience || 8 },
-    experienceAreas: buildShortlistTools(PROFILE_DATA, getRoleProfile(PROFILE_DATA), PROFILE_DATA.experience || []),
+    stats: { ...PROFILE_DATA.profile.stats, experience: PROFILE_DATA.profile.stats?.experience || 8 },
+    experienceAreas: buildShortlistTools(PROFILE_DATA.profile, getRoleProfile(PROFILE_DATA.profile), PROFILE_DATA.experience || []),
     proof: ["Career video", "Projects", "Work evidence"],
   },
   {
@@ -120,7 +120,7 @@ export default function RecruiterPage() {
           <div className="candidate-head"><div><div className="section-kicker">DISCOVER TALENT</div><h2>{filters.length ? "Professionals with relevant experience" : "Explore sample PDP professionals"}</h2></div><span>{candidates.length} profiles</span></div>
           <div className="candidate-grid">
             {candidates.map(candidate => <article className="candidate-card" key={candidate.id}>
-              <div className="candidate-card-top"><div className="candidate-avatar">{candidate.name.split(" ").map(x => x[0]).join("").slice(0,2)}</div><div><h3>{candidate.name}</h3><p>{candidate.role}</p></div><span className="evidence-badge">● Proof</span></div>
+              <div className="candidate-card-top"><div className="candidate-avatar">{(candidate.name || "PDP").trim().split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0,2)}</div><div><h3>{candidate.name}</h3><p>{candidate.role}</p></div><span className="evidence-badge">● Proof</span></div>
               <div className="candidate-meta"><span>⌖ {candidate.location}</span><span>◷ {candidate.stats.experience}+ yrs</span><span>{candidate.industry}</span></div>
               <div className="match-label">MATCHED EXPERIENCE</div>
               <div className="candidate-tags">{(candidate.matched.length ? candidate.matched : candidate.experienceAreas.slice(0,4)).map(tag => <span key={tag}>{tag}</span>)}</div>
