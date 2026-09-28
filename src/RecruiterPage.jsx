@@ -131,7 +131,6 @@ export default function RecruiterPage() {
             </article>)}
           </div>
           {candidates.length === 0 && <div className="empty-state">No sample profile matches this requirement yet. Try broader experience terms.</div>}
-          <p className="demo-note">Demo discovery data only. Candidate claims, experience and proof will come from real PDP profiles after authentication and backend connection.</p>
         </section>
 
         <section className="recruiter-flow" id="how"><div><div className="section-kicker">THE PDP RECRUITER FLOW</div><h2>Requirement → Experience → Proof → Contact</h2></div><div className="flow-cards"><div><b>01</b><strong>Describe the need</strong><span>Paste a JD or define the role.</span></div><div><b>02</b><strong>Find relevant experience</strong><span>Use role and industry evidence.</span></div><div><b>03</b><strong>Open the PDP</strong><span>Review projects, videos and work proof.</span></div><div><b>04</b><strong>Shortlist & connect</strong><span>Save or contact the professional.</span></div></div></section>
