@@ -105,7 +105,9 @@ export default function RecruiterPage() {
           <div className="requirement-box">
             <label htmlFor="job-requirement">JOB REQUIREMENT</label>
             <textarea id="job-requirement" value={requirement} onChange={e => setRequirement(e.target.value)} placeholder="Paste a job description or describe what you are looking for…\nExample: FMCG business development professional with distributor management, product launch and new market development experience." />
-            <div className="requirement-actions"><span>Discovery is currently deterministic — no AI/API required.</span><button onClick={() => { setRequirement("FMCG Business Development professional with distributor management, product launch and new market development experience."); setActiveFilters([]); }}>Try FMCG Example →</button></div>
+            <div className="requirement-actions">
+              <button onClick={() => { setRequirement("FMCG Business Development professional with distributor management, product launch and new market development experience."); setActiveFilters([]); }}>Try FMCG Example →</button>
+            </div>
           </div>
 
           {(suggestedFilters.length > 0 || activeFilters.length > 0) && <section className="requirement-results">
