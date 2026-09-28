@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /* ---------- Config ---------- */
-const SIGNUP_URL = "#signup";
+const SIGNUP_URL = "/upload-resume";
 const SOCIAL = {
   linkedin: "#",
   x: "#",
@@ -27,7 +27,7 @@ const IMG = {
 
 const NAV_LINKS = [
   { href: "/professionals", label: "For Professionals" },
-  { href: "#recruiters", label: "For Recruiters" },
+  { href: "/recruiters", label: "For Recruiters" },
   { href: "#how", label: "How It Works" },
   { href: "#about", label: "About" },
 ];
@@ -471,6 +471,7 @@ function App() {
   const closeMenu = () => setMenuOpen(false);
 
   const navigateTo = (path) => {
+    if (path !== window.location.pathname) { window.location.href = path; return; }
     setCurrentPath(path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -516,7 +517,7 @@ function App() {
     return () => clearInterval(timer);
   }, [isHovered, selectedSector, displayProfiles.length, currentPath]);
 
-  // Render sub-view if path matches /professionals
+  // Render connected product flow pages
   if (currentPath === "/professionals") {
     return <ProfessionalsView onNavigate={navigateTo} />;
   }
@@ -531,9 +532,9 @@ function App() {
               key={l.href} 
               href={l.href} 
               onClick={(e) => {
-                if (l.href === "/professionals") {
+                if (l.href === "/professionals" || l.href === "/recruiters") {
                   e.preventDefault();
-                  navigateTo("/professionals");
+                  navigateTo(l.href);
                 }
                 closeMenu();
               }}

@@ -92,7 +92,7 @@ export default function RecruiterPage() {
     <div className="recruiter-page">
       <header className="recruiter-topbar">
         <a className="recruiter-brand" href="/"><span className="recruiter-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></a>
-        <nav><a className="active" href="#discover">Discover Talent</a><a href="#how">How It Works</a><a href="#shortlist">Shortlist</a></nav>
+        <nav><a href="/">Home</a><a href="/professionals">Professionals</a><a className="active" href="/recruiters">Discover Talent</a><a href="#shortlist">Shortlist</a></nav>
         <a className="recruiter-back" href="/">← PDP Home</a>
       </header>
 

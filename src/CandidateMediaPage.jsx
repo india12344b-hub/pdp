@@ -57,6 +57,7 @@ export default function CandidateMediaPage() {
     <div className="media-page">
       <header className="media-topbar">
         <a className="media-brand" href="/"><span className="media-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></a>
+        <nav className="journey-nav"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/upload-resume">Resume</a><a className="active" href="/build-proof">Proof of Work</a><a href="/pdp/ananya">My PDP</a><a href="/recruiters">Recruiters</a></nav>
         <div className="media-progress"><span>01 Resume</span><b>02 Proof of Work</b><span>03 Preview & Publish</span></div>
         <a className="media-exit" href="/">Save & Exit</a>
       </header>

@@ -317,7 +317,7 @@ export default function Page2() {
         <div>
           <p>Ready to upgrade your professional presence?</p>
           <h2>Build Your Professional Profile Today</h2>
-          <a href="#signup" className="pd2-btn primary">Create Profile Now</a>
+          <a href="/upload-resume" className="pd2-btn primary">Create Profile Now</a>
           <a href="#learn-more" className="pd2-btn outline">Learn More</a>
         </div>
       </section>
