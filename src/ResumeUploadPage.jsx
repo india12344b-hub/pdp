@@ -30,7 +30,7 @@ export default function ResumeUploadPage() {
       </section>
 
       <section className="resume-card">
-        <div className="resume-copy"><span className="resume-number">01</span><div><h2>Upload your original resume</h2><p>Keep your original document intact. PDP will use it as the source for your professional information.</p><div className="resume-points"><span>✓ Employment & roles</span><span>✓ Education & certifications</span><span>✓ Skills & experience areas</span><span>✓ Achievements & projects</span></div></div></div>
+        <div className="resume-copy"><span className="resume-number">01</span><div><h2>Upload your original resume</h2><p>Keep your original document intact. PDP will use it as the source for your professional information.</p></div></div>
         <div className={"resume-drop " + (dragging ? "dragging" : "")} onClick={() => inputRef.current?.click()} onDragOver={e => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { e.preventDefault(); setDragging(false); acceptFile(e.dataTransfer.files?.[0]); }}>
           {file ? <div className="resume-file"><div className="file-icon">PDF</div><div><strong>{file.name}</strong><small>{(file.size / 1024 / 1024).toFixed(2)} MB · Ready to process</small></div><button onClick={e => { e.stopPropagation(); setFile(null); }}>Remove</button></div> : <><div className="resume-upload-icon">↑</div><strong>Drop your resume here</strong><span>or click to browse</span><small>PDF, DOC or DOCX</small></>}
           <input ref={inputRef} type="file" hidden accept=".pdf,.doc,.docx,application/pdf" onChange={e => acceptFile(e.target.files?.[0])}/>
