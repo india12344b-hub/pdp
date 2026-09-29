@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
+import { getMedia } from "./pdpStorage";
+import pdpLogo from "./pdp-logo.jpg";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
@@ -15,6 +17,7 @@ export default function Page3() {
   const [personalOpen, setPersonalOpen] = useState(false);
   const [selectedSnapshot, setSelectedSnapshot] = useState(0);
   const [selectedShortlist, setSelectedShortlist] = useState(null);
+  const [savedMedia, setSavedMedia] = useState([]);
 
   const {
     profile,
@@ -29,9 +32,42 @@ export default function Page3() {
   } = PROFILE_DATA;
   const jobProfile = useMemo(() => getRoleProfile(profile), [profile.roleProfileId]);
 
+  useEffect(() => {
+    let active = true;
+    getMedia().then(records => {
+      if (!active) return;
+      setSavedMedia((records || []).map(item => ({ ...item, url: URL.createObjectURL(item.file) })));
+    }).catch(() => {});
+    return () => {
+      active = false;
+      savedMedia.forEach(item => item.url && URL.revokeObjectURL(item.url));
+    };
+  }, []);
+
   const selectedCompany = selectedExperience === null ? null : experience[selectedExperience].company;
-  const companyProjects = selectedCompany ? projects.filter(p => p.company === selectedCompany) : projects;
-  const companyEvidence = selectedCompany ? workEvidence.filter(item => item.company === selectedCompany) : workEvidence;
+  const uploadedEvidence = savedMedia.map((item, index) => ({
+    title: item.note || item.category || "Candidate Proof",
+    meta: item.category || "Professional Evidence",
+    company: item.company || "",
+    type: item.type,
+    image: item.url,
+    uploaded: true,
+    id: item.id,
+  }));
+  const uploadedProjects = savedMedia.map((item, index) => ({
+    title: item.note || `${item.category || "Professional"} Evidence`,
+    result: item.company ? `Evidence from ${item.company}` : "Candidate-uploaded professional evidence",
+    role: item.category || "Professional Evidence",
+    company: item.company || "General",
+    evidence: [item.type === "video" ? "Video proof" : "Photo proof"],
+    image: item.url,
+    uploaded: true,
+    id: item.id,
+  }));
+  const allProjects = [...uploadedProjects, ...projects];
+  const allEvidence = [...uploadedEvidence, ...workEvidence];
+  const companyProjects = selectedCompany ? allProjects.filter(p => p.company === selectedCompany) : allProjects;
+  const companyEvidence = selectedCompany ? allEvidence.filter(item => item.company === selectedCompany) : allEvidence;
   const snapshotItems = jobProfile.snapshot || [];
   const activeSnapshot = snapshotItems[selectedSnapshot] || snapshotItems[0];
   const featuredTitle = selectedCompany ? `${jobProfile.focusLabel} at ${selectedCompany}` : jobProfile.focusLabel;
@@ -40,10 +76,10 @@ export default function Page3() {
     : `A ${jobProfile.category.toLowerCase()} profile, shaped around the work and evidence available.`;
 
   const snapshotProjects = activeSnapshot?.relatedProjects?.length
-    ? projects.filter(p => activeSnapshot.relatedProjects.includes(p.title))
+    ? allProjects.filter(p => activeSnapshot.relatedProjects.includes(p.title))
     : [];
   const snapshotEvidence = activeSnapshot?.relatedEvidence?.length
-    ? workEvidence.filter(item => activeSnapshot.relatedEvidence.includes(item.title))
+    ? allEvidence.filter(item => activeSnapshot.relatedEvidence.includes(item.title))
     : [];
   const snapshotCompanies = activeSnapshot?.companies?.length ? activeSnapshot.companies : experience.map(item => item.company);
   const shortlistTools = useMemo(() => buildShortlistTools(profile, jobProfile, experience), [profile, jobProfile, experience]);
@@ -59,7 +95,7 @@ export default function Page3() {
   return (
     <div className="pdp3-page">
       <header className="pdp3-topbar">
-        <button className="pdp3-brand" onClick={goHome} aria-label="Go to PDP home"><span className="pdp3-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></button>
+        <button className="pdp3-brand" onClick={goHome} aria-label="Go to PDP home"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></button>
         <nav><a className="active" href="#overview">Overview</a><a href="#experience">Work</a><a href="#proof">Proof</a><a href="#know-me">Know Me</a><a href="#contact">Contact</a></nav>
         <div className="pdp3-nav-actions"><button className="pdp3-icon-btn" aria-label="Share profile">↗</button><button className="pdp3-outline-btn" onClick={() => window.print()}>Download Resume</button></div>
         <button className="pdp3-mobile-menu" aria-label="Open menu">☰</button>

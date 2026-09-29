@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import pdpLogo from "./pdp-logo.jpg";
 
 /* ---------- Config ---------- */
 const SIGNUP_URL = "/upload-resume";
@@ -107,11 +108,7 @@ function Img({ src, alt = "", eager = false }) {
 function Logo({ onNavigate }) {
   return (
     <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); onNavigate("/"); }} aria-label="PDP home">
-      <span className="brand-mark"><span /></span>
-      <span>
-        <strong>PDP</strong>
-        <small>Professional Digital Profile</small>
-      </span>
+      <img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" />
     </a>
   );
 }
@@ -139,11 +136,7 @@ function ProfessionalsView({ onNavigate }) {
       {/* Topbar */}
       <header className="pd2-topbar">
         <div className="pd2-brand" onClick={() => onNavigate("/")} style={{ cursor: "pointer" }}>
-          <div className="pd2-mark"><span /></div>
-          <div>
-            <strong>PDP</strong>
-            <small>FOR PROFESSIONALS</small>
-          </div>
+          <img className="pdp-real-logo pd2-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" />
         </div>
 
         <nav>

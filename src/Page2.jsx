@@ -1,4 +1,5 @@
 import React from 'react';
+import pdpLogo from './pdp-logo.jpg';
 import './page2.css';
 
 export default function Page2() {
@@ -7,13 +8,7 @@ export default function Page2() {
       {/* Top Navigation Bar */}
       <header className="pd2-topbar">
         <div className="pd2-brand">
-          <div className="pd2-mark">
-            <span />
-          </div>
-          <div>
-            <strong>PDP</strong>
-            <small>FOR PROFESSIONALS</small>
-          </div>
+          <img className="pdp-real-logo pd2-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" />
         </div>
 
         <nav>

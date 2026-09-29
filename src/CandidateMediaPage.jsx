@@ -1,5 +1,7 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { clearIntro, deleteMedia, getMedia, getResume, getIntro, saveIntro, saveMedia } from "./pdpStorage";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
+import pdpLogo from "./pdp-logo.jpg";
 
 const MAX_VIDEO_SECONDS = 20;
 const MAX_IMAGES = 20;
@@ -17,23 +19,35 @@ export default function CandidateMediaPage() {
   const [items, setItems] = useState([]);
   const [note, setNote] = useState("");
   const [intro, setIntro] = useState(null);
+  const [resumeRecord, setResumeRecord] = useState(null);
+  const [status, setStatus] = useState("Loading your saved content…");
   const fileRef = useRef(null);
   const introRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getResume(), getMedia(), getIntro()]).then(([resume, media, savedIntro]) => {
+      if (!active) return;
+      setResumeRecord(resume || null);
+      const restored = (media || []).map(item => ({ ...item, file: item.file, url: URL.createObjectURL(item.file) }));
+      setItems(restored);
+      if (savedIntro?.file) setIntro({ ...savedIntro, url: URL.createObjectURL(savedIntro.file) });
+      setStatus(resume ? "✓ Resume connected" : "No saved resume found — upload one first");
+    }).catch(() => setStatus("Could not load saved content"));
+    return () => { active = false; };
+  }, []);
 
   const addFiles = (files) => {
     const next = Array.from(files || []).filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
     if (!next.length) return;
-    const mapped = next.map(file => ({
-      id: `${file.name}-${file.lastModified}-${Math.random()}`,
-      file,
-      url: URL.createObjectURL(file),
-      type: file.type.startsWith("video/") ? "video" : "image",
-      category: activeCategory,
-      company: selectedCompany,
-      note: note.trim(),
-    }));
-    setItems(current => [...current, ...mapped]);
-    setNote("");
+    Promise.all(next.map(file => saveMedia(file, { category: activeCategory, company: selectedCompany, note: note.trim() })))
+      .then(records => {
+        const mapped = records.map(record => ({ ...record, file: record.file, url: URL.createObjectURL(record.file) }));
+        setItems(current => [...current, ...mapped]);
+        setNote("");
+        setStatus(`✓ ${mapped.length} file${mapped.length === 1 ? "" : "s"} saved to ${activeCategory}${selectedCompany ? ` · ${selectedCompany}` : ""}`);
+      })
+      .catch(() => setStatus("Upload selected, but could not save it locally"));
   };
 
   const removeItem = (id) => {
@@ -42,11 +56,16 @@ export default function CandidateMediaPage() {
       if (found) URL.revokeObjectURL(found.url);
       return current.filter(item => item.id !== id);
     });
+    deleteMedia(id).catch(() => {});
+    setStatus("Evidence removed");
   };
 
   const setIntroVideo = (file) => {
     if (!file || !file.type.startsWith("video/")) return;
-    setIntro({ file, url: URL.createObjectURL(file) });
+    saveIntro(file).then(record => {
+      setIntro({ ...record, url: URL.createObjectURL(record.file) });
+      setStatus("✓ Career introduction saved");
+    }).catch(() => setStatus("Career video selected, but could not be saved locally"));
   };
 
   const categoryItems = items.filter(item => item.category === activeCategory);
@@ -56,7 +75,7 @@ export default function CandidateMediaPage() {
   return (
     <div className="media-page">
       <header className="media-topbar">
-        <a className="media-brand" href="/"><span className="media-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></a>
+        <a className="media-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
         <nav className="journey-nav"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/upload-resume">Resume</a><a className="active" href="/build-proof">Proof of Work</a><a href="/pdp/ananya">My PDP</a><a href="/recruiters">Recruiters</a></nav>
         <div className="media-progress"><span>01 Resume</span><b>02 Proof of Work</b><span>03 Preview & Publish</span></div>
         <a className="media-exit" href="/">Save & Exit</a>
@@ -67,13 +86,14 @@ export default function CandidateMediaPage() {
           <div className="media-kicker">BUILD YOUR PDP</div>
           <h1>Now show the work<br /><em>behind your career.</em></h1>
           <p>Your resume has created the professional structure. Add genuine photos and videos to make that experience visible.</p>
-          <div className="media-profile-chip"><span>{initials(profile.name)}</span><div><strong>{profile.name}</strong><small>{profile.role} · {profile.location}</small></div><i>✓ Resume processed</i></div>
+          <div className="media-profile-chip"><span>{initials(profile.name)}</span><div><strong>{profile.name}</strong><small>{profile.role} · {profile.location}</small></div><i>{resumeRecord ? "✓ Resume saved" : "⚠ Resume not connected"}</i></div>
+          <div className="media-save-status">{status}</div>
         </section>
 
         <section className="intro-card">
           <div><div className="media-kicker">CAREER INTRODUCTION</div><h2>Tell your professional story</h2><p>A short video in your own voice. Keep it natural — around 45 seconds.</p></div>
           <div className="intro-upload">
-            {intro ? <div className="intro-preview"><video src={intro.url} controls /><button onClick={() => { URL.revokeObjectURL(intro.url); setIntro(null); }}>Remove</button></div> : <button className="upload-big" onClick={() => introRef.current?.click()}><span>▶</span><strong>Upload career video</strong><small>MP4, MOV or WebM · approx. 45 sec</small></button>}
+            {intro ? <div className="intro-preview"><video src={intro.url} controls /><button onClick={() => { URL.revokeObjectURL(intro.url); setIntro(null); clearIntro(); setStatus("Career introduction removed"); }}>Remove</button></div> : <button className="upload-big" onClick={() => introRef.current?.click()}><span>▶</span><strong>Upload career video</strong><small>MP4, MOV or WebM · approx. 45 sec</small></button>}
             <input ref={introRef} type="file" accept="video/*" hidden onChange={e => setIntroVideo(e.target.files?.[0])} />
           </div>
         </section>
@@ -91,7 +111,7 @@ export default function CandidateMediaPage() {
               <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="What are we seeing? Add a short context — project, event, launch, client interaction, result, your contribution…" />
               <div className="dropzone" onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}><div className="drop-icon">＋</div><strong>Drop photos or videos here</strong><span>or click to browse · multiple files allowed</span><small>Genuine professional evidence only</small></div>
               <input ref={fileRef} type="file" multiple accept="image/*,video/*" hidden onChange={e => addFiles(e.target.files)} />
-              <div className="upload-actions"><span>Nothing to upload? You can skip this section.</span><button onClick={() => setItems(current => current.filter(item => item.category !== activeCategory))}>Clear section</button></div>
+              <div className="upload-actions"><span>Saved automatically on this device.</span><button onClick={() => { const ids = items.filter(item => item.category === activeCategory).map(item => item.id); ids.forEach(id => deleteMedia(id).catch(() => {})); setItems(current => current.filter(item => item.category !== activeCategory)); setStatus(`${activeCategory} cleared`); }}>Clear section</button></div>
             </div>
 
             <div className="evidence-preview-panel"><div className="preview-title"><strong>{activeCategory}</strong><span>{categoryItems.length} item{categoryItems.length === 1 ? "" : "s"}</span></div>{categoryItems.length ? <div className="media-grid">{categoryItems.map(item => <article key={item.id} className="media-tile">{item.type === "video" ? <video src={item.url} controls /> : <img src={item.url} alt="Uploaded professional evidence" />}<div><span>{item.type === "video" ? "VIDEO" : "PHOTO"}</span><button onClick={() => removeItem(item.id)}>×</button></div>{item.company && <small>{item.company}</small>}</article>)}</div> : <div className="empty-preview"><span>◇</span><strong>Your evidence will appear here</strong><small>Upload a real work moment, project demonstration, presentation, event, team/client interaction, product or other professional proof.</small></div>}</div>

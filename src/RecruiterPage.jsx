@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
+import pdpLogo from "./pdp-logo.jpg";
 
 const DEMO_CANDIDATES = [
   {
@@ -91,7 +92,7 @@ export default function RecruiterPage() {
   return (
     <div className="recruiter-page">
       <header className="recruiter-topbar">
-        <a className="recruiter-brand" href="/"><span className="recruiter-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></a>
+        <a className="recruiter-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
         <nav><a href="/">Home</a><a href="/professionals">Professionals</a><a className="active" href="/recruiters">Discover Talent</a><a href="#shortlist">Shortlist</a></nav>
         <a className="recruiter-back" href="/">← PDP Home</a>
       </header>
