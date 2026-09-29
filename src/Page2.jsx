@@ -1,5 +1,5 @@
 import React from 'react';
-import pdpLogo from './pdp-logo.jpg';
+import pdpLogo from './pdp-logo.png';
 import './page2.css';
 
 export default function Page2() {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import pdpLogo from "./pdp-logo.jpg";
+import pdpLogo from "./pdp-logo.png";
 
 /* ---------- Config ---------- */
 const SIGNUP_URL = "/upload-resume";

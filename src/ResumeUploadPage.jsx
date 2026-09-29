@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { clearResume, getResume, saveResume } from "./pdpStorage";
-import pdpLogo from "./pdp-logo.jpg";
+import { getDraft, saveDraft } from "./pdpDraft";
+import pdpLogo from "./pdp-logo.png";
 
 export default function ResumeUploadPage() {
   const inputRef = useRef(null);
@@ -8,6 +9,7 @@ export default function ResumeUploadPage() {
   const [dragging, setDragging] = useState(false);
   const [saved, setSaved] = useState(false);
   const [status, setStatus] = useState("Loading saved resume…");
+  const [draft, setDraft] = useState(getDraft());
 
   useEffect(() => {
     getResume().then(record => {
@@ -33,7 +35,7 @@ export default function ResumeUploadPage() {
     <header className="resume-topbar">
       <a className="media-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
       <nav className="journey-nav">
-        <a href="/">Home</a><a href="/professionals">For Professionals</a><a className="active" href="/upload-resume">Resume</a><a href="/build-proof">Proof of Work</a><a href="/pdp/ananya">My PDP</a><a href="/recruiters">Recruiters</a>
+        <a href="/">Home</a><a href="/professionals">For Professionals</a><a className="active" href="/upload-resume">Resume</a><a href="/build-proof">Proof of Work</a><a href="/pdp/me">My PDP</a><a href="/recruiters">Recruiters</a>
       </nav>
       <a className="resume-exit" href="/">Save & Exit</a>
     </header>
@@ -55,6 +57,15 @@ export default function ResumeUploadPage() {
       </section>
 
       <div className={"resume-save-status " + (saved ? "saved" : "")}> <span>{status}</span></div>
+      {file && <section className="resume-profile-details">
+        <div><div className="media-kicker">PROFILE PREVIEW</div><h2>Tell PDP who this resume belongs to.</h2><p>These details are saved with your PDP draft. We will connect automated resume extraction here in the data layer next — nothing is invented.</p></div>
+        <div className="resume-profile-grid">
+          <label>FULL NAME<input value={draft.name} onChange={e => { const value = e.target.value; setDraft(saveDraft({ name: value })); }} placeholder="Your full name" /></label>
+          <label>CURRENT / MOST RECENT ROLE<input value={draft.role} onChange={e => { const value = e.target.value; setDraft(saveDraft({ role: value })); }} placeholder="e.g. Business Development Manager" /></label>
+          <label>LOCATION<input value={draft.location} onChange={e => { const value = e.target.value; setDraft(saveDraft({ location: value })); }} placeholder="City, Country" /></label>
+        </div>
+      </section>}
+
       <div className="resume-note"><span>ⓘ</span><p><strong>Your original resume stays yours.</strong> PDP creates structured profile information from it; it does not fabricate experience or rewrite factual claims.</p></div>
 
       <section className="resume-next"><div><div className="media-kicker">NEXT STEP</div><h2>{file ? "Resume ready. Now add your proof." : "Upload your resume to continue."}</h2><p>{file ? "Continue to the Proof of Work page and connect real photos and videos to your experience." : "You can also explore the product first and come back to this step later."}</p></div><a className={"resume-continue " + (!file ? "disabled" : "")} href={file ? "/build-proof" : "#"} onClick={e => { if (!file) e.preventDefault(); }}>{file ? "Continue to Proof of Work →" : "Upload Resume First"}</a></section>

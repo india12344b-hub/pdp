@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { clearIntro, deleteMedia, getMedia, getResume, getIntro, saveIntro, saveMedia } from "./pdpStorage";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
-import pdpLogo from "./pdp-logo.jpg";
+import { getDraft, saveDraft } from "./pdpDraft";
+import pdpLogo from "./pdp-logo.png";
 
 const MAX_VIDEO_SECONDS = 20;
 const MAX_IMAGES = 20;
@@ -11,11 +12,13 @@ function initials(name = "PDP") {
 }
 
 export default function CandidateMediaPage() {
-  const profile = PROFILE_DATA.profile;
-  const roleProfile = getRoleProfile(profile);
-  const categories = useMemo(() => buildShortlistTools(profile, roleProfile, PROFILE_DATA.experience || []), [profile, roleProfile]);
+  const [draft, setDraft] = useState(getDraft());
+  const profile = { ...PROFILE_DATA.profile, name: draft.name || "Your Professional Profile", role: draft.role || "Professional Profile", location: draft.location || "Add your location" };
+  const roleProfile = getRoleProfile(PROFILE_DATA.profile);
+  const categories = useMemo(() => ["Core Role Evidence", "Projects & Achievements", "Client / Market Work", "Leadership & Team", "Credentials & Recognition"], []);
   const [activeCategory, setActiveCategory] = useState(categories[0] || "Professional Evidence");
-  const [selectedCompany, setSelectedCompany] = useState(PROFILE_DATA.experience?.[0]?.company || "");
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [companyInput, setCompanyInput] = useState("");
   const [items, setItems] = useState([]);
   const [note, setNote] = useState("");
   const [intro, setIntro] = useState(null);
@@ -31,6 +34,7 @@ export default function CandidateMediaPage() {
       setResumeRecord(resume || null);
       const restored = (media || []).map(item => ({ ...item, file: item.file, url: URL.createObjectURL(item.file) }));
       setItems(restored);
+      if (!selectedCompany && restored.find(item => item.company)?.company) setSelectedCompany(restored.find(item => item.company).company);
       if (savedIntro?.file) setIntro({ ...savedIntro, url: URL.createObjectURL(savedIntro.file) });
       setStatus(resume ? "✓ Resume connected" : "No saved resume found — upload one first");
     }).catch(() => setStatus("Could not load saved content"));
@@ -76,7 +80,7 @@ export default function CandidateMediaPage() {
     <div className="media-page">
       <header className="media-topbar">
         <a className="media-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
-        <nav className="journey-nav"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/upload-resume">Resume</a><a className="active" href="/build-proof">Proof of Work</a><a href="/pdp/ananya">My PDP</a><a href="/recruiters">Recruiters</a></nav>
+        <nav className="journey-nav"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/upload-resume">Resume</a><a className="active" href="/build-proof">Proof of Work</a><a href="/pdp/me">My PDP</a><a href="/recruiters">Recruiters</a></nav>
         <div className="media-progress"><span>01 Resume</span><b>02 Proof of Work</b><span>03 Preview & Publish</span></div>
         <a className="media-exit" href="/">Save & Exit</a>
       </header>
@@ -107,7 +111,8 @@ export default function CandidateMediaPage() {
             <div className="upload-panel">
               <div className="upload-panel-top"><div><span className="category-dot">●</span><strong>{activeCategory}</strong><small>Evidence connected to this professional area</small></div><span className="limit">Videos ~20 sec · Photos up to {MAX_IMAGES}</span></div>
               <label>CONNECT THIS EVIDENCE TO</label>
-              <select value={selectedCompany} onChange={e => setSelectedCompany(e.target.value)}><option value="">General / multiple companies</option>{PROFILE_DATA.experience?.map(exp => <option key={exp.company} value={exp.company}>{exp.company} · {exp.role}</option>)}</select>
+              <input value={companyInput} onChange={e => setCompanyInput(e.target.value)} onBlur={() => { const value = companyInput.trim(); if (value) { setSelectedCompany(value); setDraft(saveDraft({ experience: [...(getDraft().experience || []).filter(x => x.company !== value), { company: value, role: draft.role || "Professional Role", years: "", desc: "Candidate-added work experience", highlight: "Candidate-uploaded evidence", tags: [activeCategory] }] })); } }} placeholder="Company / organisation (optional)" />
+              {Array.from(new Set([...(draft.experience || []).map(x => x.company), ...items.map(x => x.company).filter(Boolean)])).length > 0 && <select value={selectedCompany} onChange={e => setSelectedCompany(e.target.value)}><option value="">General / multiple companies</option>{Array.from(new Set([...(draft.experience || []).map(x => x.company), ...items.map(x => x.company).filter(Boolean)])).map(company => <option key={company} value={company}>{company}</option>)}</select>}
               <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="What are we seeing? Add a short context — project, event, launch, client interaction, result, your contribution…" />
               <div className="dropzone" onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}><div className="drop-icon">＋</div><strong>Drop photos or videos here</strong><span>or click to browse · multiple files allowed</span><small>Genuine professional evidence only</small></div>
               <input ref={fileRef} type="file" multiple accept="image/*,video/*" hidden onChange={e => addFiles(e.target.files)} />
@@ -120,7 +125,7 @@ export default function CandidateMediaPage() {
 
         <section className="trust-strip"><div><span>✓</span><strong>Authenticity matters</strong><p>PDP is designed around genuine professional evidence. Suspicious uploads may be reviewed.</p></div><a href="#concern">Raise a concern</a></section>
 
-        <section className="media-footer"><div><div className="media-kicker">NEXT STEP</div><h2>Your PDP is taking shape.</h2><p>You can add more evidence later. Continue when the profile represents you.</p></div><a className="continue-btn" href="/pdp/ananya">Preview My PDP →</a></section>
+        <section className="media-footer"><div><div className="media-kicker">NEXT STEP</div><h2>Your PDP is taking shape.</h2><p>You can add more evidence later. Continue when the profile represents you.</p></div><a className="continue-btn" href="/pdp/me">Preview My PDP →</a></section>
       </main>
     </div>
   );

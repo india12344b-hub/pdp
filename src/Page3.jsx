@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
-import { getMedia } from "./pdpStorage";
-import pdpLogo from "./pdp-logo.jpg";
+import { getMedia, getResume, getIntro } from "./pdpStorage";
+import { getDraft } from "./pdpDraft";
+import pdpLogo from "./pdp-logo.png";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
@@ -18,33 +19,49 @@ export default function Page3() {
   const [selectedSnapshot, setSelectedSnapshot] = useState(0);
   const [selectedShortlist, setSelectedShortlist] = useState(null);
   const [savedMedia, setSavedMedia] = useState([]);
+  const [savedResume, setSavedResume] = useState(null);
+  const [savedIntro, setSavedIntro] = useState(null);
+  const [draft, setDraft] = useState(getDraft());
 
-  const {
-    profile,
-    experience = [],
-    projects = [],
-    workEvidence = [],
-    achievements = [],
-    credentials = [],
-    recommendations = [],
-    timeline = [],
-    personal = [],
-  } = PROFILE_DATA;
-  const jobProfile = useMemo(() => getRoleProfile(profile), [profile.roleProfileId]);
+  const isDemo = ["/pdp", "/pdp/ananya", "/ananya"].includes(window.location.pathname.replace(/\/$/, "") || "/");
+  const base = isDemo ? PROFILE_DATA : { profile: { name: draft.name || "Your Professional Profile", role: draft.role || "Professional Profile", location: draft.location || "Add your location", introduction: "Your professional story will appear here as you complete your PDP.", pdpUrl: "pdp.yourprofile", email: "", phone: "", skills: [], stats: { experience: "", projects: 0, awards: 0, specialization: "" } }, experience: draft.experience || [], projects: [], workEvidence: [], achievements: [], credentials: [], recommendations: [], timeline: [], personal: [] };
+  const profile = base.profile;
+  const [baseExperience, setBaseExperience] = useState(base.experience || []);
+  const experience = useMemo(() => {
+    const merged = [...baseExperience];
+    savedMedia.filter(item => item.company).forEach(item => {
+      if (!merged.some(exp => exp.company === item.company)) merged.push({ company: item.company, role: profile.role, years: "", desc: "Candidate-uploaded professional evidence", highlight: item.note || "Candidate-uploaded evidence", tags: [item.category] });
+    });
+    return merged;
+  }, [baseExperience, savedMedia, profile.role]);
+  const projects = base.projects || [];
+  const workEvidence = base.workEvidence || [];
+  const achievements = base.achievements || [];
+  const credentials = base.credentials || [];
+  const recommendations = base.recommendations || [];
+  const timeline = base.timeline || [];
+  const personal = base.personal || [];
+  const jobProfile = useMemo(() => getRoleProfile(profile), [profile.role, profile.roleProfileId]);
 
   useEffect(() => {
     let active = true;
-    getMedia().then(records => {
+    Promise.all([getMedia(), getResume(), getIntro()]).then(([records, resume, intro]) => {
       if (!active) return;
+      setSavedResume(resume || null);
+      setSavedIntro(intro?.file ? { ...intro, url: URL.createObjectURL(intro.file) } : null);
       setSavedMedia((records || []).map(item => ({ ...item, url: URL.createObjectURL(item.file) })));
     }).catch(() => {});
     return () => {
       active = false;
-      savedMedia.forEach(item => item.url && URL.revokeObjectURL(item.url));
     };
   }, []);
 
-  const selectedCompany = selectedExperience === null ? null : experience[selectedExperience].company;
+  useEffect(() => {
+    setDraft(getDraft());
+    setBaseExperience(getDraft().experience || base.experience || []);
+  }, [window.location.pathname]);
+
+  const selectedCompany = selectedExperience === null ? null : experience[selectedExperience]?.company;
   const uploadedEvidence = savedMedia.map((item, index) => ({
     title: item.note || item.category || "Candidate Proof",
     meta: item.category || "Professional Evidence",
@@ -106,7 +123,7 @@ export default function Page3() {
 
         <section className="pdp3-hero" id="overview">
           <div className="pdp3-video-card">
-            <Img src={IMAGES.hero} alt={profile.name} />
+            {savedIntro ? <video className="pdp3-hero-intro-video" src={savedIntro.url} controls /> : <Img src={IMAGES.hero} alt={profile.name} />}
             <div className="pdp3-video-overlay"><button className="pdp3-play" aria-label="Play career introduction">▶</button><div><strong>Career Introduction</strong><span>0:38 · Watch my story</span></div></div>
             <div className="pdp3-video-badge">REAL PERSON · REAL STORY</div>
           </div>
@@ -118,10 +135,11 @@ export default function Page3() {
             <p className="pdp3-lead">{profile.introduction}</p>
             <div className="pdp3-actions"><button className="pdp3-primary">✉ Contact Me</button><button className="pdp3-whatsapp">◉ WhatsApp</button><button className="pdp3-ghost">↓ Resume</button></div>
             <div className="pdp3-socials"><span>in</span><span>◎</span><span>Be</span><span>↗</span></div>
+            {!isDemo && <div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>}
           </div>
           <aside className="pdp3-quick">
             <h3><Icon>◉</Icon> Quick Info</h3>
-            <div className="pdp3-info-row"><span>Experience</span><b>8+ Years</b></div><div className="pdp3-info-row"><span>Location</span><b>{profile.location}</b></div><div className="pdp3-info-row"><span>Email</span><b>{profile.email}</b></div><div className="pdp3-info-row"><span>Phone</span><b>{profile.phone}</b></div>
+            <div className="pdp3-info-row"><span>Experience</span><b>{profile.stats.experience ? `${profile.stats.experience}+ Years` : "To be added"}</b></div><div className="pdp3-info-row"><span>Location</span><b>{profile.location}</b></div><div className="pdp3-info-row"><span>Email</span><b>{profile.email}</b></div><div className="pdp3-info-row"><span>Phone</span><b>{profile.phone}</b></div>
             <div className="pdp3-divider" /><strong className="pdp3-label">Skills</strong><div className="pdp3-chips">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div>
           </aside>
         </section>
@@ -217,7 +235,7 @@ export default function Page3() {
           <div className="pdp3-card-section"><SectionHead icon="✦" title="Let's Connect" subtitle="Feel free to reach out — I'm open to new opportunities, collaborations and exciting projects." /><div className="pdp3-contact-actions"><button>☎ Call</button><button>◉ WhatsApp</button><button>✉ Email</button><button>in LinkedIn</button></div></div>
         </section>
 
-        <footer className="pdp3-footer"><button className="pdp3-brand" onClick={goHome}><span className="pdp3-mark"><span /></span><span><strong>PDP</strong><small>Professional Digital Profile</small></span></button><div><strong>Build your professional presence.</strong><br /><span>Showcase your work. Get discovered.</span></div><nav><a href="/" onClick={(e)=>{e.preventDefault();goHome();}}>Home</a><a href="/professionals">For Professionals</a><a href="#contact">Contact</a></nav></footer>
+        <footer className="pdp3-footer"><button className="pdp3-brand" onClick={goHome}><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></button><div><strong>Build your professional presence.</strong><br /><span>Showcase your work. Get discovered.</span></div><nav><a href="/" onClick={(e)=>{e.preventDefault();goHome();}}>Home</a><a href="/professionals">For Professionals</a><a href="#contact">Contact</a></nav></footer>
       </main>
     </div>
   );

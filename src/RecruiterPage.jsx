@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
-import pdpLogo from "./pdp-logo.jpg";
+import pdpLogo from "./pdp-logo.png";
 
 const DEMO_CANDIDATES = [
   {
