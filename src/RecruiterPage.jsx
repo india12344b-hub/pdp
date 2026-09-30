@@ -26,6 +26,7 @@ export default function RecruiterPage() {
   const [hasIntro, setHasIntro] = useState(false);
   const [requirement, setRequirement] = useState("");
   const [activeFilters, setActiveFilters] = useState([]);
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
   const [shortlisted, setShortlisted] = useState(false);
 
   useEffect(() => {
@@ -36,12 +37,18 @@ export default function RecruiterPage() {
   const roleProfile = useMemo(() => getRoleProfile(profile), [profile.role, profile.skills?.join(","), profile.about]);
   const areas = useMemo(() => buildShortlistTools(profile, roleProfile, profile.experience || []), [profile, roleProfile]);
   const suggestedFilters = useMemo(() => requirementFilters(requirement, areas), [requirement, areas]);
-  const filters = activeFilters.length ? activeFilters : suggestedFilters;
+  const filters = searchSubmitted ? (activeFilters.length ? activeFilters : suggestedFilters) : [];
   const haystack = [profile.name, profile.role, profile.location, profile.about, ...(profile.skills || []), ...(profile.experience || []).flatMap(x => [x.company, x.role, x.desc, x.highlight, ...(x.tags || [])])].filter(Boolean).join(" ").toLowerCase();
   const matched = filters.filter(f => (ALIASES[f.toLowerCase()] || [f.toLowerCase()]).some(t => haystack.includes(t)));
   const profileReady = Boolean(profile.name && profile.role);
 
-  const toggleFilter = filter => setActiveFilters(current => current.includes(filter) ? current.filter(x => x !== filter) : [...current, filter]);
+  const toggleFilter = filter => { setSearchSubmitted(true); setActiveFilters(current => current.includes(filter) ? current.filter(x => x !== filter) : [...current, filter]); };
+  const runSearch = () => {
+    if (!requirement.trim()) return;
+    setActiveFilters(suggestedFilters);
+    setSearchSubmitted(true);
+    window.requestAnimationFrame(() => document.getElementById("requirement-results")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   return <div className="recruiter-page">
     <header className="recruiter-topbar">
@@ -57,10 +64,10 @@ export default function RecruiterPage() {
         <p>Describe the professional you need. PDP turns the requirement into relevant experience areas and surfaces live PDP profiles.</p>
         <div className="requirement-box">
           <label htmlFor="job-requirement">JOB REQUIREMENT</label>
-          <textarea id="job-requirement" value={requirement} onChange={e => setRequirement(e.target.value)} placeholder="Paste a job description or describe what you are looking for…" />
-          <div className="requirement-actions"><span>Live profile data only — no fabricated candidates.</span>{areas.length > 0 && <button onClick={() => { setRequirement(areas.slice(0, 4).join(", ")); setActiveFilters([]); }}>Use profile experience →</button>}</div>
+          <textarea id="job-requirement" value={requirement} onChange={e => { setRequirement(e.target.value); setSearchSubmitted(false); setActiveFilters([]); }} placeholder="Paste a job description or describe what you are looking for…" />
+          <div className="requirement-actions"><span>Live profile data only — no fabricated candidates.</span><div className="requirement-action-group">{areas.length > 0 && <button type="button" onClick={() => { setRequirement(areas.slice(0, 4).join(", ")); setSearchSubmitted(false); setActiveFilters([]); }}>Use profile experience →</button>}<button type="button" className="requirement-search-btn" onClick={runSearch} disabled={!requirement.trim()}>Search <span aria-hidden="true">→</span></button></div></div>
         </div>
-        {(suggestedFilters.length > 0 || activeFilters.length > 0) && <section className="requirement-results"><div className="section-kicker">RELEVANT EXPERIENCE</div><h2>What matters in this requirement</h2><p>These filters connect the requirement to documented candidate experience.</p><div className="filter-row">{suggestedFilters.map(filter => <button key={filter} className={filters.includes(filter) ? "selected" : ""} onClick={() => toggleFilter(filter)}>{filter}<span>{filters.includes(filter) ? "✓" : "+"}</span></button>)}</div></section>}
+        {searchSubmitted && (suggestedFilters.length > 0 || activeFilters.length > 0) && <section className="requirement-results" id="requirement-results"><div className="section-kicker">RELEVANT EXPERIENCE</div><h2>What matters in this requirement</h2><p>These filters connect the requirement to documented candidate experience.</p><div className="filter-row">{suggestedFilters.map(filter => <button key={filter} className={filters.includes(filter) ? "selected" : ""} onClick={() => toggleFilter(filter)}>{filter}<span>{filters.includes(filter) ? "✓" : "+"}</span></button>)}</div></section>}
       </section>
 
       <section className="candidate-section" id="shortlist">
