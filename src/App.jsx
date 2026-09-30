@@ -551,6 +551,7 @@ function App() {
         {/* HERO */}
         <section className="hero section-pad">
           <div className="hero-copy">
+            <div className="eyebrow">YOUR WORK. YOUR JOURNEY. YOUR STORY.</div>
             <h1>Go Beyond Resume.<br /><em>Your Work. Your Impact.</em></h1>
             <p className="hero-text">
               The candidate-first platform where professionals prove their work through real videos,
