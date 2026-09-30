@@ -1,19 +1,16 @@
-const KEY = "pdp-profile-draft-v1";
+const KEY = "pdp-profile-draft-v2";
 
 const DEFAULT_DRAFT = {
-  name: "",
-  role: "",
-  location: "",
-  experience: [],
+  name: "", role: "", location: "", email: "", phone: "", introduction: "", about: "",
+  roleProfileId: "", skills: [], experience: [],
+  stats: { experience: "", projects: 0, awards: 0, specialization: "" },
 };
 
 export function getDraft() {
   try {
     const raw = window.localStorage.getItem(KEY);
-    return raw ? { ...DEFAULT_DRAFT, ...JSON.parse(raw) } : { ...DEFAULT_DRAFT };
-  } catch {
-    return { ...DEFAULT_DRAFT };
-  }
+    return raw ? { ...DEFAULT_DRAFT, ...JSON.parse(raw), stats: { ...DEFAULT_DRAFT.stats, ...(JSON.parse(raw).stats || {}) } } : { ...DEFAULT_DRAFT, stats: { ...DEFAULT_DRAFT.stats } };
+  } catch { return { ...DEFAULT_DRAFT, stats: { ...DEFAULT_DRAFT.stats } }; }
 }
 
 export function saveDraft(patch = {}) {
@@ -29,6 +26,4 @@ export function addExperience(experience) {
   return saveDraft({ experience: [...draft.experience, experience] });
 }
 
-export function clearDraft() {
-  window.localStorage.removeItem(KEY);
-}
+export function clearDraft() { window.localStorage.removeItem(KEY); }

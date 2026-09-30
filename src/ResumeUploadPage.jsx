@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { clearResume, getResume, saveResume } from "./pdpStorage";
+import { clearResume, getResume, saveResume, saveProfile } from "./pdpStorage";
 import { getDraft, saveDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 
@@ -17,6 +17,11 @@ export default function ResumeUploadPage() {
       else setStatus("No resume saved yet");
     }).catch(() => setStatus("Local save is unavailable in this browser"));
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { if (draft?.name || draft?.role || draft?.location) saveProfile(draft).catch(() => {}); }, 350);
+    return () => clearTimeout(timer);
+  }, [draft]);
 
   const acceptFile = (f) => {
     if (!f) return;

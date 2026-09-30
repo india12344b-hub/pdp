@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { PROFILE_DATA, getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
+import { getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
-import { getMedia, getResume, getIntro } from "./pdpStorage";
+import { getMedia, getResume, getIntro, getProfile } from "./pdpStorage";
 import { getDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
 function Img({ src, alt = "" }) { return <img src={src} alt={alt} loading="lazy" decoding="async" />; }
+function MediaVisual({ item, alt = "" }) { return item?.type === "video" ? <video src={item.image || item.url} controls muted playsInline /> : <Img src={item?.image || item?.url} alt={alt} />; }
+function initials(name = "PDP") { return name.trim().split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0, 2).toUpperCase() || "PDP"; }
+function slugify(value = "profile") { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "profile"; }
 
 function SectionHead({ icon, title, subtitle, action }) {
   return <div className="pdp3-section-head"><div className="pdp3-section-title"><Icon>{icon}</Icon><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></div>{action && <a href={`#${action.target}`}>{action.label} <Arrow /></a>}</div>;
@@ -23,8 +26,17 @@ export default function Page3() {
   const [savedIntro, setSavedIntro] = useState(null);
   const [draft, setDraft] = useState(getDraft());
 
-  const isDemo = ["/pdp", "/pdp/ananya", "/ananya"].includes(window.location.pathname.replace(/\/$/, "") || "/");
-  const base = isDemo ? PROFILE_DATA : { profile: { name: draft.name || "Your Professional Profile", role: draft.role || "Professional Profile", location: draft.location || "Add your location", introduction: "Your professional story will appear here as you complete your PDP.", pdpUrl: "pdp.yourprofile", email: "", phone: "", skills: [], stats: { experience: "", projects: 0, awards: 0, specialization: "" } }, experience: draft.experience || [], projects: [], workEvidence: [], achievements: [], credentials: [], recommendations: [], timeline: [], personal: [] };
+  const base = { profile: {
+    name: draft.name || "Your Professional Profile",
+    role: draft.role || "Professional Profile",
+    roleProfileId: draft.roleProfileId || "",
+    location: draft.location || "Add your location",
+    introduction: draft.introduction || "Your professional story will appear here as you complete your PDP.",
+    about: draft.about || "Your professional background and story will appear here as you complete your PDP.",
+    pdpUrl: `pdp.mypdp.in/${slugify(draft.name || "profile")}`,
+    email: draft.email || "", phone: draft.phone || "", skills: draft.skills || [],
+    stats: { experience: draft.stats?.experience || "", projects: draft.stats?.projects || 0, awards: draft.stats?.awards || 0, specialization: draft.stats?.specialization || "", current: draft.stats?.current || "" },
+  }, experience: draft.experience || [], projects: [], workEvidence: [], achievements: [], credentials: [], recommendations: [], timeline: [], personal: [] };
   const profile = base.profile;
   const [baseExperience, setBaseExperience] = useState(base.experience || []);
   const experience = useMemo(() => {
@@ -41,15 +53,16 @@ export default function Page3() {
   const recommendations = base.recommendations || [];
   const timeline = base.timeline || [];
   const personal = base.personal || [];
-  const jobProfile = useMemo(() => getRoleProfile(profile), [profile.role, profile.roleProfileId]);
+  const jobProfile = useMemo(() => profile.role && profile.role !== "Professional Profile" ? getRoleProfile(profile) : { category: "Professional", title: "Professional Profile", totalYears: 0, focusLabel: "Featured Work", shortlistTools: [], sections: { projects: "Featured Work", proof: "Work Evidence", achievements: "Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Career Journey" }, snapshot: [] }, [profile]);
 
   useEffect(() => {
     let active = true;
-    Promise.all([getMedia(), getResume(), getIntro()]).then(([records, resume, intro]) => {
+    Promise.all([getMedia(), getResume(), getIntro(), getProfile()]).then(([records, resume, intro, cloudProfile]) => {
       if (!active) return;
+      if (cloudProfile?.profile) setDraft(cloudProfile.profile);
       setSavedResume(resume || null);
       setSavedIntro(intro?.file ? { ...intro, url: URL.createObjectURL(intro.file) } : null);
-      setSavedMedia((records || []).map(item => ({ ...item, url: URL.createObjectURL(item.file) })));
+      setSavedMedia((records || []).map(item => ({ ...item, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") })));
     }).catch(() => {});
     return () => {
       active = false;
@@ -108,13 +121,19 @@ export default function Page3() {
     : experience;
 
   const goHome = () => { window.location.href = "/"; };
+  const downloadOriginalResume = () => {
+    if (!savedResume?.file) return;
+    const url = URL.createObjectURL(savedResume.file);
+    const a = document.createElement("a"); a.href = url; a.download = savedResume.name || "original-resume"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   return (
     <div className="pdp3-page">
       <header className="pdp3-topbar">
         <button className="pdp3-brand" onClick={goHome} aria-label="Go to PDP home"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></button>
         <nav><a className="active" href="#overview">Overview</a><a href="#experience">Work</a><a href="#proof">Proof</a><a href="#know-me">Know Me</a><a href="#contact">Contact</a></nav>
-        <div className="pdp3-nav-actions"><button className="pdp3-icon-btn" aria-label="Share profile">↗</button><button className="pdp3-outline-btn" onClick={() => window.print()}>Download Resume</button></div>
+        <div className="pdp3-nav-actions"><button className="pdp3-icon-btn" aria-label="Share profile">↗</button><button className="pdp3-outline-btn" onClick={downloadOriginalResume} disabled={!savedResume?.file}>Download Original Resume</button></div>
         <button className="pdp3-mobile-menu" aria-label="Open menu">☰</button>
       </header>
 
@@ -123,7 +142,7 @@ export default function Page3() {
 
         <section className="pdp3-hero" id="overview">
           <div className="pdp3-video-card">
-            {savedIntro ? <video className="pdp3-hero-intro-video" src={savedIntro.url} controls /> : <Img src={IMAGES.hero} alt={profile.name} />}
+            {savedIntro ? <video className="pdp3-hero-intro-video" src={savedIntro.url} controls playsInline /> : <div className="pdp3-no-intro"><span>{initials(profile.name)}</span><strong>Career Introduction</strong><small>Upload your career video from Proof of Work.</small></div>}
             <div className="pdp3-video-overlay"><button className="pdp3-play" aria-label="Play career introduction">▶</button><div><strong>Career Introduction</strong><span>0:38 · Watch my story</span></div></div>
             <div className="pdp3-video-badge">REAL PERSON · REAL STORY</div>
           </div>
@@ -135,7 +154,7 @@ export default function Page3() {
             <p className="pdp3-lead">{profile.introduction}</p>
             <div className="pdp3-actions"><button className="pdp3-primary">✉ Contact Me</button><button className="pdp3-whatsapp">◉ WhatsApp</button><button className="pdp3-ghost">↓ Resume</button></div>
             <div className="pdp3-socials"><span>in</span><span>◎</span><span>Be</span><span>↗</span></div>
-            {!isDemo && <div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>}
+            {<div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>}
           </div>
           <aside className="pdp3-quick">
             <h3><Icon>◉</Icon> Quick Info</h3>
@@ -194,7 +213,7 @@ export default function Page3() {
 
         <section className="pdp3-card-section" id="about">
           <SectionHead icon="♙" title="About Me" subtitle="The person behind the professional profile." />
-          <div className="pdp3-about-grid"><div><h3>My Professional Story</h3><p>{profile.about}</p><button className="pdp3-link-btn">View Full Story <Arrow /></button></div><div className="pdp3-stats"><div><b>{profile.stats.experience}</b><span>Years Experience</span></div><div><b>{profile.stats.projects}</b><span>Projects Completed</span></div><div><b>{profile.stats.awards}</b><span>Awards & Recognition</span></div><div><small>Currently</small><strong>{profile.role} @ XYZ Technologies</strong></div><div><small>Specialization</small><strong>{profile.stats.specialization}</strong></div></div><Img src={IMAGES.about} alt="Working professionally" /></div>
+          <div className="pdp3-about-grid"><div><h3>My Professional Story</h3><p>{profile.about}</p><button className="pdp3-link-btn">View Full Story <Arrow /></button></div><div className="pdp3-stats"><div><b>{profile.stats.experience || "—"}</b><span>Years Experience</span></div><div><b>{profile.stats.projects || "—"}</b><span>Projects Completed</span></div><div><b>{profile.stats.awards || "—"}</b><span>Awards & Recognition</span></div><div><small>Currently</small><strong>{profile.stats.current || experience[0]?.company || "Add current role"}</strong></div><div><small>Specialization</small><strong>{profile.stats.specialization || profile.role}</strong></div></div><div className="pdp3-about-placeholder"><span>{initials(profile.name)}</span><strong>Professional profile</strong><small>Add profile media when you are ready.</small></div></div>
         </section>
 
         <section className="pdp3-card-section" id="experience">
@@ -208,18 +227,18 @@ export default function Page3() {
             <span>{selectedCompany ? `Showing ${companyProjects.length} project${companyProjects.length === 1 ? "" : "s"} linked to ${selectedCompany}.` : "Showing the candidate's strongest work across their career."}</span>
             {selectedCompany && <button onClick={() => setSelectedExperience(null)}>Show All Work ×</button>}
           </div>
-          {companyProjects.length ? <div className="pdp3-horizontal-scroll pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.title}><div className="pdp3-project-img"><Img src={p.image} alt={p.title} /><span className="pdp3-project-play">▶</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-company-fallback"><div className="pdp3-company-fallback-head"><Icon>▣</Icon><div><span className="pdp3-detail-kicker">ROLE / RESUME EVIDENCE</span><h3>{selectedCompany ? `${selectedCompany} · ${experience[selectedExperience]?.role || "Role"}` : "Career work evidence"}</h3></div></div><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Structured role information and candidate-uploaded project media will appear here."}</p><div className="pdp3-chips">{(experience[selectedExperience]?.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></div>}
+          {companyProjects.length ? <div className="pdp3-horizontal-scroll pdp3-project-grid">{companyProjects.map(p => <article className="pdp3-project" key={p.id || p.title}><div className="pdp3-project-img"><MediaVisual item={p} alt={p.title} /><span className="pdp3-project-play">{p.type === "video" ? "▶" : "▦"}</span></div><div className="pdp3-project-body"><h3>{p.title} <Arrow /></h3><strong>{p.result}</strong><div className="pdp3-chips"><span>{p.role}</span><span>{p.company}</span></div><small className="pdp3-project-evidence">{p.evidence.join(" · ")}</small></div></article>)}</div> : <div className="pdp3-company-fallback"><div className="pdp3-company-fallback-head"><Icon>▣</Icon><div><span className="pdp3-detail-kicker">ROLE / RESUME EVIDENCE</span><h3>{selectedCompany ? `${selectedCompany} · ${experience[selectedExperience]?.role || "Role"}` : "Career work evidence"}</h3></div></div><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Structured role information and candidate-uploaded project media will appear here."}</p><div className="pdp3-chips">{(experience[selectedExperience]?.tags || []).map(tag => <span key={tag}>{tag}</span>)}</div></div>}
         </section>
 
         <section className="pdp3-card-section" id="proof">
           <SectionHead icon="▤" title={jobProfile.sections.proof} subtitle="Videos, photos, presentations and more — real proof behind the profile." action={{ target: "proof", label: "View All Media" }} />
-          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.title}><div className="pdp3-media-img"><Img src={item.image} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p></div>}
+          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.id || item.title}><div className="pdp3-media-img"><MediaVisual item={item} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p></div>}
         </section>
 
         <section className="pdp3-three-grid">
           <div className="pdp3-card-section compact"><SectionHead icon="🏆" title="Achievements" subtitle="Recognition for my work and impact." /><ul>{achievements.map(x => <li key={x}><Icon>★</Icon><span>{x}</span><b>›</b></li>)}</ul></div>
           <div className="pdp3-card-section compact"><SectionHead icon="▣" title="Credentials" subtitle="Certifications and formal education." /><ul>{credentials.map(x => <li key={x}><Icon>✓</Icon><span>{x}</span><b>›</b></li>)}</ul></div>
-          <div className="pdp3-card-section compact"><SectionHead icon="♧" title="People I Worked With" subtitle="Recommendations from colleagues and managers." /><div className="pdp3-recommendation"><div className="pdp3-reco-head"><Img src={IMAGES.selfie1} alt={recommendations[0]?.name || "Recommendation"} /><div><strong>Rohit Mehta</strong><span>{recommendations[0]?.role || "Professional connection"}</span></div></div><p>“{recommendations[0]?.text || "Recommendations will appear here when added."}”</p><div className="pdp3-stars">★★★★★</div></div></div>
+          <div className="pdp3-card-section compact"><SectionHead icon="♧" title="People I Worked With" subtitle="Recommendations from colleagues and managers." /><div className="pdp3-recommendation"><div className="pdp3-reco-head"><div className="pdp3-about-placeholder small"><span>+</span></div><div><strong>{recommendations[0]?.name || "No recommendations added yet"}</strong><span>{recommendations[0]?.role || "Add recommendations when available"}</span></div></div><p>{recommendations[0]?.text || "Recommendations will appear here when you add them to your profile."}</p></div></div>
         </section>
 
         <section className="pdp3-card-section pdp3-timeline-section" id="journey"><SectionHead icon="◉" title="Career Journey" subtitle="Key milestones in my professional journey." /><div className="pdp3-timeline">{timeline.map(([year,title,desc]) => <div key={year} className="pdp3-milestone"><span className="pdp3-dot" /><strong>{year}</strong><b>{title}</b><small>{desc}</small></div>)}</div></section>

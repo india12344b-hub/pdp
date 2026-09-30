@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { clearIntro, deleteMedia, getMedia, getResume, getIntro, saveIntro, saveMedia } from "./pdpStorage";
-import { PROFILE_DATA, getRoleProfile, buildShortlistTools } from "./pdpProfileData";
+import { clearIntro, deleteMedia, getMedia, getResume, getIntro, saveIntro, saveMedia, getProfile, saveProfile } from "./pdpStorage";
+import { getRoleProfile } from "./pdpProfileData";
 import { getDraft, saveDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 
@@ -13,10 +13,13 @@ function initials(name = "PDP") {
 
 export default function CandidateMediaPage() {
   const [draft, setDraft] = useState(getDraft());
-  const profile = { ...PROFILE_DATA.profile, name: draft.name || "Your Professional Profile", role: draft.role || "Professional Profile", location: draft.location || "Add your location" };
-  const roleProfile = getRoleProfile(PROFILE_DATA.profile);
-  const categories = useMemo(() => ["Core Role Evidence", "Projects & Achievements", "Client / Market Work", "Leadership & Team", "Credentials & Recognition"], []);
-  const [activeCategory, setActiveCategory] = useState(categories[0] || "Professional Evidence");
+  const profile = { name: draft.name || "Your Professional Profile", role: draft.role || "Professional Profile", location: draft.location || "Add your location" };
+  const roleProfile = getRoleProfile(profile);
+  const categories = useMemo(() => {
+    const roleAreas = (roleProfile?.shortlistTools || []).slice(0, 6);
+    return [...new Set([...roleAreas, "Projects & Achievements", "Leadership & Team", "Other Professional Evidence"])];
+  }, [roleProfile]);
+  const [activeCategory, setActiveCategory] = useState(categories[0] || "Other Professional Evidence");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [companyInput, setCompanyInput] = useState("");
   const [items, setItems] = useState([]);
@@ -29,10 +32,11 @@ export default function CandidateMediaPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getResume(), getMedia(), getIntro()]).then(([resume, media, savedIntro]) => {
+    Promise.all([getResume(), getMedia(), getIntro(), getProfile()]).then(([resume, media, savedIntro, cloudProfile]) => {
       if (!active) return;
+      if (cloudProfile?.profile) setDraft(saveDraft(cloudProfile.profile));
       setResumeRecord(resume || null);
-      const restored = (media || []).map(item => ({ ...item, file: item.file, url: URL.createObjectURL(item.file) }));
+      const restored = (media || []).map(item => ({ ...item, file: item.file, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") }));
       setItems(restored);
       if (!selectedCompany && restored.find(item => item.company)?.company) setSelectedCompany(restored.find(item => item.company).company);
       if (savedIntro?.file) setIntro({ ...savedIntro, url: URL.createObjectURL(savedIntro.file) });
@@ -40,6 +44,16 @@ export default function CandidateMediaPage() {
     }).catch(() => setStatus("Could not load saved content"));
     return () => { active = false; };
   }, []);
+
+  const attachCompany = () => {
+    const value = companyInput.trim();
+    if (!value) return;
+    const next = saveDraft({ experience: [...(getDraft().experience || []).filter(x => x.company !== value), { company: value, role: draft.role || "Professional Role", years: "", desc: "Candidate-added work experience", highlight: "Candidate-uploaded evidence", tags: [activeCategory] }] });
+    setDraft(next);
+    setSelectedCompany(value);
+    saveProfile(next).catch(() => {});
+    setStatus(`✓ ${value} connected to this evidence`);
+  };
 
   const addFiles = (files) => {
     const next = Array.from(files || []).filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
@@ -105,13 +119,13 @@ export default function CandidateMediaPage() {
         <section className="evidence-section">
           <div className="evidence-heading"><div><div className="media-kicker">PROOF OF WORK</div><h2>Add evidence by experience</h2><p>These sections are generated from your role + resume. Add only what genuinely represents your work.</p></div><div className="media-counts"><b>{videoCount}<small>videos</small></b><b>{imageCount}<small>photos</small></b></div></div>
 
-          <div className="category-tabs">{categories.map(category => <button key={category} className={activeCategory === category ? "active" : ""} onClick={() => setActiveCategory(category)}>{category}</button>)}<button className={activeCategory === "Other Professional Evidence" ? "active" : ""} onClick={() => setActiveCategory("Other Professional Evidence")}>Other Evidence</button></div>
+          <div className="category-tabs">{categories.map(category => <button key={category} className={activeCategory === category ? "active" : ""} onClick={() => setActiveCategory(category)}>{category}</button>)}</div>
 
           <div className="upload-workspace">
             <div className="upload-panel">
               <div className="upload-panel-top"><div><span className="category-dot">●</span><strong>{activeCategory}</strong><small>Evidence connected to this professional area</small></div><span className="limit">Videos ~20 sec · Photos up to {MAX_IMAGES}</span></div>
               <label>CONNECT THIS EVIDENCE TO</label>
-              <input value={companyInput} onChange={e => setCompanyInput(e.target.value)} onBlur={() => { const value = companyInput.trim(); if (value) { setSelectedCompany(value); setDraft(saveDraft({ experience: [...(getDraft().experience || []).filter(x => x.company !== value), { company: value, role: draft.role || "Professional Role", years: "", desc: "Candidate-added work experience", highlight: "Candidate-uploaded evidence", tags: [activeCategory] }] })); } }} placeholder="Company / organisation (optional)" />
+              <div className="company-connect"><input value={companyInput} onChange={e => setCompanyInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); attachCompany(); } }} placeholder="Company / organisation" /><button type="button" onClick={attachCompany}>Attach</button></div>
               {Array.from(new Set([...(draft.experience || []).map(x => x.company), ...items.map(x => x.company).filter(Boolean)])).length > 0 && <select value={selectedCompany} onChange={e => setSelectedCompany(e.target.value)}><option value="">General / multiple companies</option>{Array.from(new Set([...(draft.experience || []).map(x => x.company), ...items.map(x => x.company).filter(Boolean)])).map(company => <option key={company} value={company}>{company}</option>)}</select>}
               <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="What are we seeing? Add a short context — project, event, launch, client interaction, result, your contribution…" />
               <div className="dropzone" onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}><div className="drop-icon">＋</div><strong>Drop photos or videos here</strong><span>or click to browse · multiple files allowed</span><small>Genuine professional evidence only</small></div>
