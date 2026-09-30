@@ -2,6 +2,30 @@ import React from 'react';
 import pdpLogo from './pdp-logo.png';
 import './professionals.css';
 
+const PROOF_LEFT = [
+  { label: "Career Video", icon: "▶", img: "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=300&q=80" },
+  { label: "Work Photos", icon: "▦", img: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=300&q=80" },
+  { label: "Projects", icon: "✦", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=300&q=80" },
+];
+const PROOF_RIGHT = [
+  { label: "Certifications", icon: "✓", img: "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?auto=format&fit=crop&w=300&q=80" },
+  { label: "Achievements", icon: "★", img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=300&q=80" },
+  { label: "Recommendations", icon: "❝", img: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=300&q=80" },
+];
+
+function ProofChip({ item, side, i }) {
+  return (
+    <div className={`pd2-chip ${side}`} style={{ "--d": `${i * 0.45}s` }}>
+      <div className="pd2-chip-img">
+        <img src={item.img} alt={item.label} loading="lazy" />
+        <i>{item.icon}</i>
+      </div>
+      <span>{item.label}</span>
+    </div>
+  );
+}
+
+
 export default function Page2() {
   return (
     <div className="pd2-page">
@@ -53,56 +77,31 @@ export default function Page2() {
         </div>
 
         <div className="pd2-hero-art">
-          <div className="pd2-hero-glow" />
-          <img
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
-            alt="Professional Hero"
-            className="pd2-hero-person"
-          />
-
-          {/* Floating Badges */}
-          <div className="pd2-float career">
-            <span>Career Video</span>
-            <i>▶</i>
-          </div>
-          <div className="pd2-float photos">
-            <span>Work Photos</span>
-          </div>
-          <div className="pd2-float projects">
-            <span>Projects</span>
-          </div>
-          <div className="pd2-float cert">
-            <div className="pd2-cert-art">📜</div>
-            <span>Certifications</span>
-          </div>
-          <div className="pd2-float achievement">
-            <div className="pd2-mini-chart">📈</div>
-            <span>Achievements</span>
-          </div>
-          <div className="pd2-float recommendation">
-            <div className="pd2-people">👥</div>
-            <span>Recommendations</span>
+          <div className="pd2-col">
+            {PROOF_LEFT.map((it, i) => <ProofChip key={it.label} item={it} side="left" i={i} />)}
           </div>
 
-          {/* Profile Card Overlay */}
-          <div className="pd2-profile-card">
-            <div className="pd2-avatar">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"
-                alt="Ananya Sharma"
-              />
-            </div>
-            <div>
-              <strong>Ananya Sharma <span>•</span></strong>
-              <small>Product Designer</small>
-              <p>Designing products that people love.</p>
-              <div className="pd2-tags">
-                <i>UI/UX</i>
-                <i>Design</i>
-                <i>Product</i>
+          <div className="pd2-stage">
+            <div className="pd2-hero-glow" />
+            <img
+              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
+              alt="Ananya Sharma"
+              className="pd2-hero-person"
+            />
+            <div className="pd2-profile-card">
+              <div className="pd2-avatar">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Ananya Sharma" />
+              </div>
+              <div>
+                <strong>Ananya Sharma <span>•</span></strong>
+                <small>Product Designer</small>
+                <div className="pd2-tags"><i>UI/UX</i><i>Design</i><i>Product</i></div>
               </div>
             </div>
-            <div className="pd2-qr">📱</div>
+          </div>
+
+          <div className="pd2-col">
+            {PROOF_RIGHT.map((it, i) => <ProofChip key={it.label} item={it} side="right" i={i} />)}
           </div>
         </div>
       </section>
