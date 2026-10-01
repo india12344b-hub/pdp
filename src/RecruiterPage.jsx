@@ -3,6 +3,7 @@ import { getDraft } from "./pdpDraft";
 import { getMedia, getIntro } from "./pdpStorage";
 import { getRoleProfile, buildShortlistTools } from "./pdpProfileData";
 import pdpLogo from "./pdp-logo.png";
+import PdpPal from "./PdpPal";
 
 const ALIASES = {
   "distributor management": ["distributor", "distribution", "channel"],
@@ -50,6 +51,21 @@ export default function RecruiterPage() {
     window.requestAnimationFrame(() => document.getElementById("requirement-results")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
+  const applySearch = (text) => {
+    setRequirement(text);
+    setActiveFilters(requirementFilters(text, areas));
+    setSearchSubmitted(true);
+  };
+  const palProfiles = profileReady ? [{
+    name: profile.name,
+    role: profile.role,
+    location: profile.location,
+    experience: profile.stats?.experience,
+    proofCount: proof.length + (hasIntro ? 1 : 0),
+    haystack,
+    url: "/pdp/me",
+  }] : [];
+
   return <div className="recruiter-page">
     <header className="recruiter-topbar">
       <a className="recruiter-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
@@ -84,5 +100,6 @@ export default function RecruiterPage() {
 
       <section className="recruiter-flow" id="how"><div><div className="section-kicker">THE PDP RECRUITER FLOW</div><h2>Requirement → Experience → Proof → Contact</h2></div><div className="flow-cards"><div><b>01</b><strong>Describe the need</strong><span>Paste a JD or define the role.</span></div><div><b>02</b><strong>Find relevant experience</strong><span>Use documented role and industry evidence.</span></div><div><b>03</b><strong>Open the PDP</strong><span>Review real projects, videos and photos.</span></div><div><b>04</b><strong>Shortlist & connect</strong><span>Save or contact the professional.</span></div></div></section>
     </main>
+    <PdpPal profiles={palProfiles} onSearch={applySearch} onShortlist={() => setShortlisted(true)} />
   </div>;
 }

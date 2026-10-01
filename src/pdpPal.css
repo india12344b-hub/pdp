@@ -1,0 +1,69 @@
+/* PDP Pal — floating recruiter assistant */
+.pal-launcher{
+  position:fixed; z-index:2000; border-radius:50%; cursor:grab; touch-action:none; user-select:none;
+  border:2px solid rgba(40,190,255,.8); background:#dfe8ff;
+  box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 0 rgba(18,181,255,.5);
+  animation:palPulse 2.6s ease-out infinite;
+}
+.pal-launcher:active{cursor:grabbing}
+.pal-launcher img{width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:50% 30%; pointer-events:none; animation:palBob 3.2s ease-in-out infinite}
+.pal-hint{
+  position:absolute; right:calc(100% + 10px); top:50%; transform:translateY(-50%);
+  white-space:nowrap; padding:8px 12px; border-radius:12px; font-size:13px; font-weight:600;
+  background:#0b2540; color:#e6f6ff; border:1px solid rgba(40,190,255,.45); pointer-events:none;
+}
+
+.pal-panel{
+  position:fixed; z-index:1999; display:flex; flex-direction:column; overflow:hidden;
+  background:linear-gradient(160deg,#08203a,#051528); color:#eaf4fb;
+  border:1px solid rgba(40,190,255,.45); border-radius:18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 40px rgba(0,140,255,.15);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  animation:palIn .22s ease-out;
+}
+.pal-head{display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:grab; touch-action:none; user-select:none; border-bottom:1px solid rgba(255,255,255,.08); background:rgba(5,24,44,.9)}
+.pal-head:active{cursor:grabbing}
+.pal-head>img{width:38px; height:38px; border-radius:50%; object-fit:cover; object-position:50% 30%; border:1.5px solid #17b6ff; pointer-events:none}
+.pal-head strong{display:block; font-size:15px}
+.pal-head small{display:block; font-size:11px; color:#8fb0c6}
+.pal-head-actions{margin-left:auto; display:flex; gap:6px}
+.pal-head-actions button{min-width:30px; height:30px; padding:0 8px; border-radius:8px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:#cfe6f5; cursor:pointer; font-size:13px}
+.pal-head-actions button.on,.pal-head-actions button:hover{border-color:#17b6ff; color:#fff}
+
+.pal-list{flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin}
+.pal-msg{max-width:88%}
+.pal-msg p{margin:0; padding:9px 12px; border-radius:14px; font-size:14px; line-height:1.5}
+.pal-msg.pal{align-self:flex-start}
+.pal-msg.pal p{background:rgba(255,255,255,.07); border-bottom-left-radius:4px}
+.pal-msg.me{align-self:flex-end}
+.pal-msg.me p{background:linear-gradient(90deg,#078cff,#0bbcff); color:#fff; border-bottom-right-radius:4px}
+.pal-card{display:block; margin-top:7px; padding:10px 12px; border-radius:12px; border:1px solid rgba(40,190,255,.4); background:rgba(4,26,44,.9); text-decoration:none; color:inherit}
+.pal-card:hover{border-color:#17c8ff}
+.pal-card b{display:block; font-size:14px}
+.pal-card span{display:block; font-size:12px; color:#9db8cb; margin-top:2px}
+.pal-card em{display:block; font-style:normal; font-size:12px; color:#3fd3ff; margin-top:6px; font-weight:600}
+
+.pal-quick{display:flex; gap:6px; overflow-x:auto; padding:0 12px 8px; scrollbar-width:none}
+.pal-quick::-webkit-scrollbar{display:none}
+.pal-quick button{flex:0 0 auto; padding:6px 11px; border-radius:999px; border:1px solid rgba(60,150,200,.4); background:rgba(5,30,50,.8); color:#bfe2f4; font-size:12px; cursor:pointer}
+.pal-quick button:hover{border-color:#17c8ff; color:#fff}
+
+.pal-input{display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid rgba(255,255,255,.08); background:rgba(4,20,38,.9)}
+.pal-input input{flex:1; min-width:0; padding:10px 12px; border-radius:999px; border:1px solid rgba(90,160,220,.25); background:#06182e; color:#eaf4fb; font:inherit; font-size:14px; outline:none}
+.pal-input input:focus{border-color:rgba(40,190,255,.65)}
+.pal-mic,.pal-send{flex:0 0 auto; width:38px; height:38px; border-radius:50%; border:1px solid rgba(90,160,220,.3); background:#0b2a48; color:#e6f6ff; cursor:pointer; font-size:16px}
+.pal-send{background:linear-gradient(135deg,#078cff,#0bbcff); border:0}
+.pal-send:disabled{opacity:.45; cursor:not-allowed}
+.pal-mic.live{background:#d93a4a; border-color:#ff7b88; animation:palRec 1s ease-in-out infinite}
+
+@keyframes palBob{0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)}}
+@keyframes palPulse{0%{box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 0 rgba(18,181,255,.5)} 70%,100%{box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 0 16px rgba(18,181,255,0)}}
+@keyframes palIn{from{opacity:0; transform:translateY(8px) scale(.98)} to{opacity:1; transform:none}}
+@keyframes palRec{0%,100%{transform:scale(1)} 50%{transform:scale(1.08)}}
+
+@media(max-width:520px){
+  .pal-hint{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .pal-launcher,.pal-launcher img,.pal-panel,.pal-mic.live{animation:none}
+}
