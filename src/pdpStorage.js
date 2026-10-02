@@ -97,3 +97,13 @@ export async function saveProfile(profile) {
 export async function getProfile() {
   try { return await apiJson("/api/profile"); } catch { return null; }
 }
+
+/* Lightweight check used by PDP Pal — does NOT download the resume/intro files. */
+export async function getAssetStatus() {
+  const check = async (path, store) => {
+    try { const r = await apiJson(path); if (r?.exists) return true; } catch {}
+    try { return !!(await withStore(store, "readonly", s => s.get("current"))); } catch { return false; }
+  };
+  const [resume, intro] = await Promise.all([check("/api/resume", STORES.resume), check("/api/intro", STORES.intro)]);
+  return { resume, intro };
+}

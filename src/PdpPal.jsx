@@ -1,110 +1,116 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import palImg from "./pdp-pal.png";
 import "./pdpPal.css";
+import { respond, pageKey } from "./pal/palEngine";
+import { welcome } from "./pal/palSources"; // importing this file also registers Pal's built-in sources
+import { PAGE_SUGGESTIONS } from "./pal/palKnowledge";
+import { LANGS, L, pick, clean } from "./pal/palLang";
+import * as mem from "./pal/palMemory";
 
 /*
-  PDP Pal — free, API-free recruiter assistant.
-  - Rule-based (keywords + synonyms), runs fully in the browser.
-  - Chat + voice input (Web Speech API) + optional spoken replies.
-  - Floating and draggable; position is remembered.
-
-  Usage:
-    <PdpPal
-      profiles={[{ name, role, location, experience, proofCount, haystack, url }]}
-      onSearch={(text) => ...}      // optional: sync the page search with what Pal understood
-      onShortlist={(profile) => ...} // optional
-    />
+  PDP Pal — floating, draggable, API-free assistant for the whole site.
+  Mount ONCE (main.jsx): <PdpPal />. She reads the current page and PDP data herself.
+  Brain: ./pal/*  (engine + sources + knowledge + memory + data adapters)
 */
 
 const POS_KEY = "pdp-pal-pos-v1";
+const VISIT_KEY = "pdp-pal-visit-counted";
 const SIZE = 64;
 const MARGIN = 12;
-
-const STOP = new Set([
-  "i","need","want","looking","for","a","an","the","with","in","at","of","and","or","who","has","have","is","are",
-  "me","find","show","give","candidate","candidates","profile","profiles","person","professional","years","year",
-  "yrs","yr","experience","exp","chahiye","chaiye","mujhe","hai","ho","wala","wale","ka","ki","ke","mein","se",
-  "ko","dikhao","dikha","do","karo","aur","koi","kuch","plus","min","minimum","saal","sal","to","on","from","please","pls",
-]);
-
-const SYN = {
-  sales: ["sales", "business development", "revenue", "account"],
-  designer: ["designer", "design", "ux", "ui"],
-  design: ["design", "designer", "ux", "ui"],
-  developer: ["developer", "engineer", "software"],
-  engineer: ["engineer", "developer", "software"],
-  marketing: ["marketing", "brand", "campaign", "growth"],
-  teacher: ["teacher", "educator", "teaching", "academic"],
-  fmcg: ["fmcg", "consumer goods", "fast moving"],
-  ux: ["ux", "user experience", "research"],
-  research: ["research", "ux", "usability"],
-  leadership: ["leadership", "led", "team", "mentor"],
-  distributor: ["distributor", "distribution", "channel"],
-  gtm: ["gtm", "go-to-market", "go to market"],
-  bangalore: ["bangalore", "bengaluru"],
-  bengaluru: ["bangalore", "bengaluru"],
-  mumbai: ["mumbai", "bombay"],
-  gurgaon: ["gurgaon", "gurugram"],
-  gurugram: ["gurgaon", "gurugram"],
-};
-
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const expand = (t) => SYN[t] || [t];
-
-function tokenize(text) {
-  const words = String(text || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9/&+\- ]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !STOP.has(w) && !/^\d+\+?$/.test(w));
-  return [...new Set(words)];
-}
 
 function readPos() {
   try {
-    const raw = window.localStorage.getItem(POS_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (typeof p.x === "number" && typeof p.y === "number") return p;
-    }
+    const p = JSON.parse(window.localStorage.getItem(POS_KEY) || "null");
+    if (p && typeof p.x === "number" && typeof p.y === "number") return p;
   } catch {}
   return null;
 }
-function savePos(p) {
-  try { window.localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {}
-}
+const savePos = (p) => { try { window.localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {} };
 
-const GREETING = {
-  from: "pal",
-  text: "Hi! Mai PDP Pal hoon. Bolo ya likho kaisa candidate chahiye — role, skill, experience ya location. Example: “FMCG sales manager 5 saal Delhi”.",
-};
-
-export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
+export default function PdpPal() {
   const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+  const page = useRef(pageKey()).current;
 
+  const sessionRef = useRef(null);
+  if (!sessionRef.current) sessionRef.current = mem.loadSession();
+
+  const [lang, setLang] = useState(() => mem.loadMemory().lang || "en");
+  const [messages, setMessages] = useState(() => sessionRef.current.messages || []);
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [pos, setPos] = useState(() => {
-    const saved = readPos();
     const w = window.innerWidth, h = window.innerHeight;
-    const p = saved || { x: w - SIZE - 20, y: h - SIZE - 24 };
+    const p = readPos() || { x: w - SIZE - 20, y: h - SIZE - 24 };
     return { x: clamp(p.x, MARGIN, w - SIZE - MARGIN), y: clamp(p.y, MARGIN, h - SIZE - MARGIN) };
   });
   const [open, setOpen] = useState(false);
   const [hint, setHint] = useState(true);
-  const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState("");
-  const [lang, setLang] = useState("en-IN");
   const [listening, setListening] = useState(false);
   const [speakOn, setSpeakOn] = useState(false);
-  const [lastResults, setLastResults] = useState([]);
 
   const recRef = useRef(null);
   const listRef = useRef(null);
   const dragRef = useRef(null);
+  const bootRef = useRef(false);
   const posRef = useRef(pos);
   posRef.current = pos;
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
-  /* ---------- viewport ---------- */
+  /* ---------- session helpers ---------- */
+  const patchSession = useCallback((patch) => {
+    sessionRef.current = { ...sessionRef.current, ...patch };
+    mem.saveSession(sessionRef.current);
+  }, []);
+
+  /* ---------- speech out ---------- */
+  const speak = useCallback((text, l) => {
+    if (!speakOn || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(String(text).replace(/[“”✓○]/g, ""));
+      u.lang = LANGS[l]?.speech || "en-IN";
+      window.speechSynthesis.speak(u);
+    } catch {}
+  }, [speakOn]);
+
+  /* ---------- add a Pal message (reply objects are bilingual; pick once, here) ---------- */
+  const addPal = useCallback((reply, l) => {
+    const text = pick(reply.text, l);
+    setMessages((m) => [...m, {
+      from: "pal", text,
+      cards: reply.cards,
+      links: (reply.links || []).map((x) => ({ url: x.url, label: pick(x.label, l) })),
+      chips: (reply.chips || []).map((c) => ({ label: pick(c.label, l), send: c.send })),
+    }]);
+    speak(text, l);
+  }, [speak]);
+
+  /* ---------- boot: welcome / "you're now on…" + visit counter ---------- */
+  useEffect(() => {
+    if (bootRef.current) return;
+    bootRef.current = true;
+    const s = sessionRef.current;
+    const memory = mem.loadMemory();
+    const navigated = s.messages.length > 0 && s.currentPage && s.currentPage !== page;
+    if (!s.messages.length || navigated) addPal(welcome({ page, session: s, memory, navigated }), langRef.current);
+    patchSession({ currentPage: page });
+    if (!window.sessionStorage.getItem(VISIT_KEY)) {
+      try { window.sessionStorage.setItem(VISIT_KEY, "1"); } catch {}
+      mem.saveMemory({ visits: (memory.visits || 0) + 1, lastVisit: Date.now() });
+    }
+    mem.saveMemory({ lastPage: page });
+  }, [page, addPal, patchSession]);
+
+  /* keep the chat log in the session so it survives page changes */
+  useEffect(() => {
+    const slim = messages.slice(-30).map((m) => ({ ...m, cards: m.cards?.map(({ id, name, role, location, experience, skills, companies, proofCount, url }) => ({ id, name, role, location, experience, skills, companies, proofCount, url })) }));
+    patchSession({ messages: slim });
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages, open, patchSession]);
+
+  /* ---------- viewport, hint, cleanup ---------- */
   useEffect(() => {
     const onResize = () => {
       const w = window.innerWidth, h = window.innerHeight;
@@ -114,23 +120,14 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => setHint(false), 8000);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, open]);
-
+  useEffect(() => { const t = setTimeout(() => setHint(false), 8000); return () => clearTimeout(t); }, []);
   useEffect(() => () => { try { recRef.current?.abort(); window.speechSynthesis?.cancel(); } catch {} }, []);
 
   /* ---------- drag (launcher + panel header) ---------- */
   const bindDrag = (onTap) => ({
     onPointerDown: (e) => {
       if (e.button !== undefined && e.button !== 0) return;
-      if (e.target.closest("button[data-nodrag]")) return;
+      if (e.target.closest("[data-nodrag]")) return;
       e.currentTarget.setPointerCapture?.(e.pointerId);
       dragRef.current = { sx: e.clientX, sy: e.clientY, ox: posRef.current.x, oy: posRef.current.y, moved: false };
     },
@@ -140,10 +137,7 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
       const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
       if (!d.moved && Math.hypot(dx, dy) < 6) return;
       d.moved = true;
-      setPos({
-        x: clamp(d.ox + dx, MARGIN, window.innerWidth - SIZE - MARGIN),
-        y: clamp(d.oy + dy, MARGIN, window.innerHeight - SIZE - MARGIN),
-      });
+      setPos({ x: clamp(d.ox + dx, MARGIN, window.innerWidth - SIZE - MARGIN), y: clamp(d.oy + dy, MARGIN, window.innerHeight - SIZE - MARGIN) });
     },
     onPointerUp: () => {
       const d = dragRef.current;
@@ -155,113 +149,53 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
     onPointerCancel: () => { dragRef.current = null; },
   });
 
-  /* ---------- speech ---------- */
-  const speak = useCallback((text) => {
-    if (!speakOn || !window.speechSynthesis) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[“”]/g, ""));
-      u.lang = lang;
-      window.speechSynthesis.speak(u);
-    } catch {}
-  }, [speakOn, lang]);
-
-  const say = useCallback((text, cards) => {
-    setMessages((m) => [...m, { from: "pal", text, cards }]);
-    speak(text);
-  }, [speak]);
-
-  /* ---------- brain ---------- */
-  const search = (text) => {
-    const yearsMatch = text.match(/(\d+)\s*\+?\s*(?:years?|yrs?|yr|saal|sal)\b/i);
-    const need = yearsMatch ? parseInt(yearsMatch[1], 10) : null;
-    const tokens = tokenize(text);
-
-    if (!profiles.length) {
-      say("Abhi koi live PDP profile nahi hai. Candidate profiles banenge to mai unhe yahan search kar dunga.");
-      return;
+  /* ---------- run a reply ---------- */
+  const apply = (r, l) => {
+    if (!r) return;
+    const nextLang = r.lang || l;
+    if (r.lang) { setLang(r.lang); langRef.current = r.lang; mem.saveMemory({ lang: r.lang }); }
+    if (r.actions?.some((a) => a.type === "forget")) {
+      mem.forgetAll();
+      sessionRef.current = { ...mem.loadSession(), currentPage: page };
+      mem.saveSession(sessionRef.current);
+      mem.saveMemory({ lang: nextLang });
+      setMessages([]);
     }
-    if (!tokens.length && need === null) {
-      say("Thoda detail do — role, skill ya location. Example: “product designer 8 saal Bengaluru”.");
-      return;
-    }
-
-    onSearch?.(text);
-
-    let tooJunior = false;
-    const results = profiles
-      .map((p) => {
-        const hay = (p.haystack || "").toLowerCase();
-        const hits = tokens.filter((t) => expand(t).some((w) => hay.includes(w)));
-        const ratio = tokens.length ? hits.length / tokens.length : 1;
-        const py = parseFloat(p.experience);
-        const lowExp = need !== null && !Number.isNaN(py) && py < need;
-        return { p, hits, ratio, lowExp };
-      })
-      .filter((r) => {
-        if (r.ratio < 0.5) return false;
-        if (r.lowExp) { tooJunior = true; return false; }
-        return true;
-      })
-      .sort((a, b) => b.ratio - a.ratio);
-
-    setLastResults(results.map((r) => r.p));
-
-    if (!results.length) {
-      say(
-        tooJunior
-          ? `Role match hai, lekin experience ${need}+ saal se kam hai. Experience thoda kam karke try karo.`
-          : "Koi match nahi mila. Keywords badal ke try karo (jaise role ya skill ka naam).",
-      );
-      return;
-    }
-    const first = results[0];
-    const proof = first.p.proofCount ? ` ${first.p.proofCount} proof items attached hain.` : " Abhi proof media attach nahi hui.";
-    say(
-      `${results.length} profile${results.length > 1 ? "s" : ""} mile.${first.hits.length ? ` Match: ${first.hits.join(", ")}.` : ""}${proof} Sirf live PDP profiles dikha raha hoon.`,
-      results.map((r) => r.p),
-    );
+    if (r.session) patchSession(r.session);
+    addPal(r, nextLang);
+    (r.actions || []).forEach((a) => {
+      if (a.type === "navigate") setTimeout(() => { window.location.href = a.url; }, 700);
+      if (a.type === "event") window.dispatchEvent(new CustomEvent(a.name, { detail: a.detail }));
+    });
   };
 
-  const handle = (raw) => {
-    const text = raw.trim();
+  const handle = async (raw) => {
+    const text = String(raw || "").trim();
     if (!text) return;
     setMessages((m) => [...m, { from: "me", text }]);
     setInput("");
-    const q = text.toLowerCase();
-    const short = q.split(/\s+/).length <= 4;
-
-    if (/^(hi+|hello|hey|namaste|namaskar)\b/.test(q)) return say("Namaste! Kaisa candidate dhundhna hai?");
-    if (/\bhelp\b|kya kar|what can|kaise use/.test(q)) {
-      return say("Mai role, skill, experience aur location se live PDP profiles dhundh sakta hoon. Commands: “shortlist karo”, “proof dikhao”, “naya search”. Voice ke liye mic dabao.");
-    }
-    if (/shortlist|save kar|add to list/.test(q)) {
-      if (!lastResults.length) return say("Pehle search karo, phir shortlist kar dunga.");
-      lastResults.forEach((p) => onShortlist?.(p));
-      return say(`${lastResults[0].name} ko shortlist kar diya.`);
-    }
-    if (short && /proof|open|view|dekh|profile dikhao/.test(q)) {
-      if (!lastResults.length) return say("Pehle search karo, phir proof dikha dunga.");
-      const target = lastResults[0];
-      say(`${target.name} ka PDP khol raha hoon.`);
-      setTimeout(() => { window.location.href = target.url || "/pdp/me"; }, 600);
-      return;
-    }
-    if (/^(clear|reset|naya|new search)/.test(q)) {
-      setLastResults([]);
-      return say("Ho gaya. Naya search batao.");
-    }
-    search(text);
+    const l = langRef.current;
+    const ctx = { raw: text, norm: clean(text), page, lang: l, session: sessionRef.current, memory: mem.loadMemory() };
+    apply(await respond(ctx), l);
   };
 
-  /* ---------- voice ---------- */
+  const changeLang = (k) => {
+    if (k === lang) return;
+    setLang(k);
+    langRef.current = k;
+    mem.saveMemory({ lang: k });
+    try { window.speechSynthesis?.cancel(); } catch {}
+    addPal({ text: L("Switched to English.", "Ab main Hinglish me baat karungi.") }, k);
+  };
+
+  /* ---------- voice in ---------- */
   const toggleMic = () => {
-    if (!SR) return say("Is browser me voice input available nahi hai. Chrome ya Edge try karo, ya type karo.");
+    if (!SR) return addPal({ text: L("Voice input isn't available in this browser. Try Chrome or Edge, or type.", "Is browser me voice input available nahi hai. Chrome ya Edge try karo, ya type karo.") }, lang);
     if (listening) { recRef.current?.stop(); return; }
     try {
       window.speechSynthesis?.cancel();
       const rec = new SR();
-      rec.lang = lang;
+      rec.lang = LANGS[lang].speech;
       rec.interimResults = true;
       rec.continuous = false;
       let finalText = "";
@@ -274,16 +208,11 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
         setInput(finalText || interim);
       };
       rec.onerror = () => setListening(false);
-      rec.onend = () => {
-        setListening(false);
-        if (finalText.trim()) handle(finalText);
-      };
+      rec.onend = () => { setListening(false); if (finalText.trim()) handle(finalText); };
       recRef.current = rec;
       rec.start();
       setListening(true);
-    } catch {
-      setListening(false);
-    }
+    } catch { setListening(false); }
   };
 
   /* ---------- layout ---------- */
@@ -293,7 +222,8 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
   let panelTop = pos.y - ph - 12;
   if (panelTop < MARGIN) panelTop = clamp(pos.y + SIZE + 12, MARGIN, vp.h - ph - MARGIN);
 
-  const quick = ["Sales manager 5 saal", "Product designer", "Shortlist karo", "Help"];
+  const quick = PAGE_SUGGESTIONS[page] || PAGE_SUGGESTIONS.home;
+  const t = (en, hi) => (lang === "en" ? en : hi);
 
   return (
     <>
@@ -301,13 +231,17 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
         <section className="pal-panel" style={{ left: panelLeft, top: panelTop, width: pw, height: ph }} role="dialog" aria-label="PDP Pal assistant">
           <header className="pal-head" {...bindDrag(null)}>
             <img src={palImg} alt="" />
-            <div>
+            <div className="pal-title">
               <strong>PDP Pal</strong>
-              <small>Recruiter assistant · drag to move</small>
+              <small>{t("Drag to move", "Drag karke hilao")}</small>
             </div>
             <div className="pal-head-actions">
-              <button data-nodrag type="button" onClick={() => setLang((l) => (l === "en-IN" ? "hi-IN" : "en-IN"))} title="Voice language">{lang === "en-IN" ? "EN" : "हि"}</button>
-              <button data-nodrag type="button" className={speakOn ? "on" : ""} onClick={() => { setSpeakOn((s) => !s); try { window.speechSynthesis?.cancel(); } catch {} }} title="Pal replies aloud">{speakOn ? "🔊" : "🔈"}</button>
+              <div className="pal-lang" data-nodrag role="group" aria-label="Language">
+                {Object.entries(LANGS).map(([k, v]) => (
+                  <button key={k} data-nodrag type="button" className={lang === k ? "on" : ""} onClick={() => changeLang(k)}>{v.label}</button>
+                ))}
+              </div>
+              <button data-nodrag type="button" className={speakOn ? "on" : ""} onClick={() => { setSpeakOn((s) => !s); try { window.speechSynthesis?.cancel(); } catch {} }} title={t("Pal replies aloud", "Pal bol ke jawab de")}>{speakOn ? "🔊" : "🔈"}</button>
               <button data-nodrag type="button" onClick={() => setOpen(false)} aria-label="Close">×</button>
             </div>
           </header>
@@ -317,24 +251,28 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
               <div key={i} className={`pal-msg ${m.from}`}>
                 <p>{m.text}</p>
                 {m.cards?.map((c) => (
-                  <a key={c.name} className="pal-card" href={c.url || "/pdp/me"}>
+                  <a key={c.id || c.name} className="pal-card" href={c.url || "/pdp/me"} onClick={() => patchSession({ selectedCandidate: c })}>
                     <b>{c.name}</b>
                     <span>{c.role}{c.location ? ` · ${c.location}` : ""}</span>
-                    <em>{c.proofCount || 0} proof items · View PDP →</em>
+                    <em>{c.proofCount || 0} {t("proof items · View PDP →", "proof items · PDP dekho →")}</em>
                   </a>
                 ))}
+                {m.links?.map((x) => <a key={x.url + x.label} className="pal-link" href={x.url}>{x.label} →</a>)}
+                {m.chips?.length > 0 && i === messages.length - 1 && (
+                  <div className="pal-inline-chips">{m.chips.map((c) => <button key={c.label} type="button" onClick={() => handle(c.send)}>{c.label}</button>)}</div>
+                )}
               </div>
             ))}
-            {listening && <div className="pal-msg pal"><p>🎙 Sun raha hoon…</p></div>}
+            {listening && <div className="pal-msg pal"><p>🎙 {t("Listening…", "Sun rahi hoon…")}</p></div>}
           </div>
 
           <div className="pal-quick">
-            {quick.map((q) => <button key={q} type="button" onClick={() => handle(q)}>{q}</button>)}
+            {quick.map((q) => { const label = pick(q.label, lang); return <button key={label} type="button" onClick={() => handle(q.send)}>{label}</button>; })}
           </div>
 
           <form className="pal-input" onSubmit={(e) => { e.preventDefault(); handle(input); }}>
-            <button type="button" className={`pal-mic ${listening ? "live" : ""}`} onClick={toggleMic} aria-label="Voice input" title={SR ? "Speak" : "Voice not supported in this browser"}>🎙</button>
-            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type or speak your requirement…" />
+            <button type="button" className={`pal-mic ${listening ? "live" : ""}`} onClick={toggleMic} aria-label="Voice input" title={SR ? t("Speak", "Bolo") : t("Voice not supported in this browser", "Is browser me voice supported nahi")}>🎙</button>
+            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t("Type or speak…", "Type karo ya bolo…")} />
             <button type="submit" className="pal-send" disabled={!input.trim()} aria-label="Send">→</button>
           </form>
         </section>
@@ -342,7 +280,7 @@ export default function PdpPal({ profiles = [], onSearch, onShortlist }) {
 
       <div className="pal-launcher" style={{ left: pos.x, top: pos.y, width: SIZE, height: SIZE }} {...bindDrag(() => { setOpen((o) => !o); setHint(false); })} role="button" tabIndex={0} aria-label="Open PDP Pal" onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((o) => !o); setHint(false); } }}>
         <img src={palImg} alt="PDP Pal" draggable="false" />
-        {hint && !open && <span className="pal-hint">Need help finding talent?</span>}
+        {hint && !open && <span className="pal-hint">{t("Need help? Ask Pal", "Madad chahiye? Pal se poochho")}</span>}
       </div>
     </>
   );

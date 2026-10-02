@@ -120,6 +120,15 @@ export default function Page3() {
       })
     : experience;
 
+  useEffect(() => {
+    const onFocus = (e) => {
+      const i = experience.findIndex(x => x.company === e.detail?.company);
+      if (i >= 0) { setSelectedExperience(i); requestAnimationFrame(() => document.getElementById("experience")?.scrollIntoView({ behavior: "smooth", block: "start" })); }
+    };
+    window.addEventListener("pdp-pal:focus-experience", onFocus);
+    return () => window.removeEventListener("pdp-pal:focus-experience", onFocus);
+  }, [experience]);
+
   const goHome = () => { window.location.href = "/"; };
   const downloadOriginalResume = () => {
     if (!savedResume?.file) return;

@@ -7,6 +7,7 @@ import PdpProfilePage from "./PdpProfilePage";
 import RecruiterPage from "./RecruiterPage";
 import ProofOfWorkPage from "./ProofOfWorkPage";
 import ResumeUploadPage from "./ResumeUploadPage";
+import PdpPal from "./PdpPal";
 import "./styles.css";
 import "./professionals.css";
 import "./pdpProfile.css";
@@ -28,5 +29,6 @@ const isResumePage = pathname === "/upload-resume" || pathname === "/resume" || 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     {isProfessionalsPage ? <ProfessionalsPage /> : isPdpPage ? <PdpProfilePage /> : isRecruiterPage ? <RecruiterPage /> : isCandidateMediaPage ? <ProofOfWorkPage /> : isResumePage ? <ResumeUploadPage /> : <App />}
+    <PdpPal />
   </React.StrictMode>
 );
