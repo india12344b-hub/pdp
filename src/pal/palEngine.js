@@ -38,5 +38,6 @@ export function pageKey(path = window.location.pathname) {
   if (p === "/recruiters") return "recruiter";
   if (p === "/build-proof" || p === "/candidate-media") return "proof";
   if (["/upload-resume", "/resume", "/create"].includes(p)) return "resume";
+  if (/^\/[a-z0-9][a-z0-9-]{2,39}$/i.test(p)) return "profile";
   return "home";
 }

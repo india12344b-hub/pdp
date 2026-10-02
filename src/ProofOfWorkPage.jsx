@@ -27,6 +27,15 @@ export default function CandidateMediaPage() {
   const [intro, setIntro] = useState(null);
   const [resumeRecord, setResumeRecord] = useState(null);
   const [status, setStatus] = useState("Loading your saved content…");
+  const [originalDeclared, setOriginalDeclared] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraMode, setCameraMode] = useState("photo");
+  const [cameraError, setCameraError] = useState("");
+  const cameraVideoRef = useRef(null);
+  const cameraCanvasRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const recorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
   const fileRef = useRef(null);
   const introRef = useRef(null);
 
@@ -58,15 +67,120 @@ export default function CandidateMediaPage() {
   const addFiles = (files) => {
     const next = Array.from(files || []).filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
     if (!next.length) return;
-    Promise.all(next.map(file => saveMedia(file, { category: activeCategory, company: selectedCompany, note: note.trim() })))
+    Promise.all(next.map(file => saveMedia(file, {
+      category: activeCategory,
+      company: selectedCompany,
+      note: note.trim(),
+      captureMode: "upload",
+      originalDeclared: originalDeclared
+    })))
       .then(records => {
-        const mapped = records.map(record => ({ ...record, file: record.file, url: URL.createObjectURL(record.file) }));
+        const mapped = records.map(record => ({ ...record, file: record.file, url: record.url || URL.createObjectURL(record.file) }));
         setItems(current => [...current, ...mapped]);
         setNote("");
+        setOriginalDeclared(false);
         setStatus(`✓ ${mapped.length} file${mapped.length === 1 ? "" : "s"} saved to ${activeCategory}${selectedCompany ? ` · ${selectedCompany}` : ""}`);
       })
       .catch(() => setStatus("Upload selected, but could not save it locally"));
   };
+
+  const stopCamera = () => {
+    cameraStreamRef.current?.getTracks?.().forEach(track => track.stop());
+    cameraStreamRef.current = null;
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+    setCameraOpen(false);
+  };
+
+  const openCamera = async (mode = "photo") => {
+    setCameraMode(mode);
+    setCameraError("");
+    setCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: mode === "video"
+      });
+      cameraStreamRef.current = stream;
+      requestAnimationFrame(() => {
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
+          cameraVideoRef.current.play().catch(() => {});
+        }
+      });
+    } catch {
+      setCameraError("Camera permission was not granted or this browser does not support camera capture.");
+    }
+  };
+
+  const captureLivePhoto = async () => {
+    const video = cameraVideoRef.current;
+    const canvas = cameraCanvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async blob => {
+      if (!blob) return;
+      const file = new File([blob], `pdp-live-photo-${Date.now()}.jpg`, { type: "image/jpeg" });
+      try {
+        const record = await saveMedia(file, {
+          category: activeCategory,
+          company: selectedCompany,
+          note: note.trim() || "Captured live with PDP camera",
+          captureMode: "live",
+          originalDeclared: true
+        });
+        const mapped = { ...record, file, url: record.url || URL.createObjectURL(file), captureMode: "live", originalDeclared: true };
+        setItems(current => [...current, mapped]);
+        setNote("");
+        setStatus("✓ Live photo captured and added to your proof");
+        stopCamera();
+      } catch {
+        setStatus("Live photo captured, but could not be saved");
+      }
+    }, "image/jpeg", 0.92);
+  };
+
+  const startLiveVideo = () => {
+    const stream = cameraStreamRef.current;
+    if (!stream || typeof MediaRecorder === "undefined") {
+      setCameraError("Live video recording is not supported in this browser.");
+      return;
+    }
+    recordedChunksRef.current = [];
+    const mimeType = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find(type => MediaRecorder.isTypeSupported(type)) || "";
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    recorderRef.current = recorder;
+    recorder.ondataavailable = e => { if (e.data?.size) recordedChunksRef.current.push(e.data); };
+    recorder.onstop = async () => {
+      const blob = new Blob(recordedChunksRef.current, { type: recorder.mimeType || "video/webm" });
+      const file = new File([blob], `pdp-live-video-${Date.now()}.webm`, { type: blob.type });
+      try {
+        const record = await saveMedia(file, {
+          category: activeCategory,
+          company: selectedCompany,
+          note: note.trim() || "Captured live with PDP camera",
+          captureMode: "live",
+          originalDeclared: true
+        });
+        const mapped = { ...record, file, url: record.url || URL.createObjectURL(file), captureMode: "live", originalDeclared: true };
+        setItems(current => [...current, mapped]);
+        setNote("");
+        setStatus("✓ Live video captured and added to your proof");
+      } catch {
+        setStatus("Live video captured, but could not be saved");
+      } finally {
+        stopCamera();
+      }
+    };
+    recorder.start();
+    setStatus("● Recording live video… maximum 20 seconds");
+    window.setTimeout(() => {
+      if (recorder.state === "recording") recorder.stop();
+    }, MAX_VIDEO_SECONDS * 1000);
+  };
+
+  const captureLive = () => cameraMode === "photo" ? captureLivePhoto() : startLiveVideo();
 
   const removeItem = (id) => {
     setItems(current => {
@@ -89,6 +203,10 @@ export default function CandidateMediaPage() {
   const categoryItems = items.filter(item => item.category === activeCategory);
   const imageCount = items.filter(item => item.type === "image").length;
   const videoCount = items.filter(item => item.type === "video").length;
+
+  useEffect(() => () => {
+    cameraStreamRef.current?.getTracks?.().forEach(track => track.stop());
+  }, []);
 
   return (
     <div className="media-page">
@@ -121,6 +239,18 @@ export default function CandidateMediaPage() {
 
           <div className="category-tabs">{categories.map(category => <button key={category} className={activeCategory === category ? "active" : ""} onClick={() => setActiveCategory(category)}>{category}</button>)}</div>
 
+          <div className="pdp-authenticity-tools">
+            <div>
+              <strong>Give your proof a higher trust signal</strong>
+              <p>Capture a photo/video live through PDP, or upload an older genuine work file. For uploaded files, only tick the declaration if it is your original, unedited, non-AI-created work.</p>
+            </div>
+            <div className="pdp-live-actions">
+              <button type="button" onClick={() => openCamera("photo")}>📷 Live Photo</button>
+              <button type="button" onClick={() => openCamera("video")}>● Live Video</button>
+            </div>
+            <label className="pdp-original-check"><input type="checkbox" checked={originalDeclared} onChange={e => setOriginalDeclared(e.target.checked)} /> I confirm this uploaded file is original, unedited and not AI-created.</label>
+          </div>
+
           <div className="upload-workspace">
             <div className="upload-panel">
               <div className="upload-panel-top"><div><span className="category-dot">●</span><strong>{activeCategory}</strong><small>Evidence connected to this professional area</small></div><span className="limit">Videos ~20 sec · Photos up to {MAX_IMAGES}</span></div>
@@ -138,6 +268,18 @@ export default function CandidateMediaPage() {
         </section>
 
         <section className="trust-strip"><div><span>✓</span><strong>Authenticity matters</strong><p>PDP is designed around genuine professional evidence. Suspicious uploads may be reviewed.</p></div><a href="#concern">Raise a concern</a></section>
+
+        {cameraOpen && <div className="pdp-camera-overlay" role="dialog" aria-modal="true">
+          <div className="pdp-camera-card">
+            <div className="pdp-camera-head"><div><span className="media-kicker">LIVE PDP CAPTURE</span><h3>{cameraMode === "photo" ? "Capture a live photo" : "Record a live video"}</h3></div><button type="button" onClick={stopCamera}>×</button></div>
+            {cameraError ? <div className="pdp-camera-error">{cameraError}</div> : <video ref={cameraVideoRef} className="pdp-camera-preview" muted={cameraMode === "photo"} playsInline />}
+            <canvas ref={cameraCanvasRef} hidden />
+            <div className="pdp-camera-actions">
+              {!cameraError && <button type="button" className="continue-btn" onClick={captureLive}>{cameraMode === "photo" ? "Capture Photo" : "Start Video"}</button>}
+              <button type="button" className="media-exit" onClick={stopCamera}>Cancel</button>
+            </div>
+          </div>
+        </div>}
 
         <section className="media-footer"><div><div className="media-kicker">NEXT STEP</div><h2>Your PDP is taking shape.</h2><p>You can add more evidence later. Continue when the profile represents you.</p></div><a className="continue-btn" href="/pdp/me">Preview My PDP →</a></section>
       </main>

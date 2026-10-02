@@ -3,14 +3,16 @@
   To connect new sources (backend search, jobs API...) change these functions; nothing else in Pal needs to change.
 */
 import { getDraft } from "../pdpDraft";
-import { getMedia, getProfile, getAssetStatus } from "../pdpStorage";
+import { getMedia, getProfile, getAssetStatus, getIntro } from "../pdpStorage";
 
 export async function loadMyProfile() {
   let draft = getDraft();
   try { const cloud = await getProfile(); if (cloud?.profile) draft = { ...draft, ...cloud.profile }; } catch {}
   let media = [];
+  let intro = null;
   try { media = (await getMedia()) || []; } catch {}
-  return { draft, media, mediaCount: media.length };
+  try { intro = await getIntro(); } catch {}
+  return { draft, media, intro, mediaCount: media.length };
 }
 
 export async function getAssets() {
@@ -29,7 +31,7 @@ export async function loadProfiles() {
   return [{
     id: "me", name: d.name, role: d.role, location: d.location, experience: d.stats?.experience,
     skills: d.skills || [], companies: (d.experience || []).map((x) => x.company),
-    proofCount: mediaCount + (assets.intro ? 1 : 0), haystack, url: "/pdp/me",
+    proofCount: mediaCount + (assets.intro ? 1 : 0), haystack, url: `/${d.pdpId || String(d.name).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`,
   }];
 }
 

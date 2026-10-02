@@ -3,6 +3,8 @@ import { clearResume, getResume, saveResume, saveProfile } from "./pdpStorage";
 import { getDraft, saveDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 
+function makePdpId(value = "profile") { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "profile"; }
+
 export default function ResumeUploadPage() {
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
@@ -65,9 +67,11 @@ export default function ResumeUploadPage() {
       {file && <section className="resume-profile-details">
         <div><div className="media-kicker">PROFILE PREVIEW</div><h2>Tell PDP who this resume belongs to.</h2><p>These details are saved with your PDP draft. We will connect automated resume extraction here in the data layer next — nothing is invented.</p></div>
         <div className="resume-profile-grid">
-          <label>FULL NAME<input value={draft.name} onChange={e => { const value = e.target.value; setDraft(saveDraft({ name: value })); }} placeholder="Your full name" /></label>
+          <label>FULL NAME<input value={draft.name} onChange={e => { const value = e.target.value; setDraft(saveDraft({ name: value, pdpId: draft.pdpId || makePdpId(value) })); }} placeholder="Your full name" /></label>
+          <label>EMAIL ADDRESS<input type="email" value={draft.email || ""} onChange={e => { const value = e.target.value; setDraft(saveDraft({ email: value })); }} placeholder="you@example.com" /></label>
           <label>CURRENT / MOST RECENT ROLE<input value={draft.role} onChange={e => { const value = e.target.value; setDraft(saveDraft({ role: value })); }} placeholder="e.g. Business Development Manager" /></label>
           <label>LOCATION<input value={draft.location} onChange={e => { const value = e.target.value; setDraft(saveDraft({ location: value })); }} placeholder="City, Country" /></label>
+          <label>PDP ID <small>(your public link)</small><input value={draft.pdpId || makePdpId(draft.name)} onChange={e => { const value = makePdpId(e.target.value); setDraft(saveDraft({ pdpId: value })); }} placeholder="your-name" /><span className="pdp-id-preview">www.mypdp.in/{draft.pdpId || makePdpId(draft.name || "profile")}</span></label>
         </div>
       </section>}
 

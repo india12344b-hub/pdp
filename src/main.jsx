@@ -25,10 +25,12 @@ const isPdpPage = pathname === "/pdp" || pathname === "/pdp/me";
 const isRecruiterPage = pathname === "/recruiters";
 const isCandidateMediaPage = pathname === "/build-proof" || pathname === "/candidate-media";
 const isResumePage = pathname === "/upload-resume" || pathname === "/resume" || pathname === "/create";
+const reservedPaths = new Set(["/", "/professionals", "/pdp", "/pdp/me", "/recruiters", "/build-proof", "/candidate-media", "/upload-resume", "/resume", "/create"]);
+const isPublicPdpPage = !reservedPaths.has(pathname) && /^\/[a-z0-9][a-z0-9-]{2,39}$/i.test(pathname);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {isProfessionalsPage ? <ProfessionalsPage /> : isPdpPage ? <PdpProfilePage /> : isRecruiterPage ? <RecruiterPage /> : isCandidateMediaPage ? <ProofOfWorkPage /> : isResumePage ? <ResumeUploadPage /> : <App />}
+    {isProfessionalsPage ? <ProfessionalsPage /> : isPdpPage || isPublicPdpPage ? <PdpProfilePage /> : isRecruiterPage ? <RecruiterPage /> : isCandidateMediaPage ? <ProofOfWorkPage /> : isResumePage ? <ResumeUploadPage /> : <App />}
     <PdpPal />
   </React.StrictMode>
 );

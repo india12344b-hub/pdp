@@ -77,7 +77,7 @@ export async function saveMedia(file, metadata = {}) {
   try {
     const form = new FormData(); form.append("file", file); Object.entries(metadata).forEach(([k, v]) => form.append(k, v ?? ""));
     const remote = await apiJson("/api/media", { method: "POST", body: form });
-    const record = { ...remote, file, source: "cloudflare" }; await withStore(STORES.media, "readwrite", store => store.put(record)); return record;
+    const record = { ...remote, ...metadata, file, source: "cloudflare" }; await withStore(STORES.media, "readwrite", store => store.put(record)); return record;
   } catch {
     const id = metadata.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`; const record = { id, name: file.name, size: file.size, mimeType: file.type, type: file.type.startsWith("video/") ? "video" : "image", category: metadata.category || "Other Professional Evidence", company: metadata.company || "", note: metadata.note || "", createdAt: Date.now(), file, source: "local" };
     await withStore(STORES.media, "readwrite", store => store.put(record)); return record;

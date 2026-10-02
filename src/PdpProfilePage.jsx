@@ -5,6 +5,7 @@ import { getMedia, getResume, getIntro, getProfile } from "./pdpStorage";
 import { getDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 import AskThisPdp from "./AskThisPdp";
+import { calculatePdpScore, scoreLabel } from "./pdpScore";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
@@ -18,6 +19,8 @@ function SectionHead({ icon, title, subtitle, action }) {
 }
 
 export default function Page3() {
+  const publicSlug = window.location.pathname.replace(/^\//, "").replace(/\/$/, "");
+  const isPublicSlug = publicSlug && !["pdp", "pdp/me"].includes(publicSlug);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [selectedSnapshot, setSelectedSnapshot] = useState(0);
@@ -34,7 +37,8 @@ export default function Page3() {
     location: draft.location || "Add your location",
     introduction: draft.introduction || "Your professional story will appear here as you complete your PDP.",
     about: draft.about || "Your professional background and story will appear here as you complete your PDP.",
-    pdpUrl: `pdp.mypdp.in/${slugify(draft.name || "profile")}`,
+    pdpId: isPublicSlug ? publicSlug : (draft.pdpId || slugify(draft.name || "profile")),
+    pdpUrl: `www.mypdp.in/${isPublicSlug ? publicSlug : (draft.pdpId || slugify(draft.name || "profile"))}`,
     email: draft.email || "", phone: draft.phone || "", skills: draft.skills || [],
     stats: { experience: draft.stats?.experience || "", projects: draft.stats?.projects || 0, awards: draft.stats?.awards || 0, specialization: draft.stats?.specialization || "", current: draft.stats?.current || "" },
   }, experience: draft.experience || [], projects: [], workEvidence: [], achievements: [], credentials: [], recommendations: [], timeline: [], personal: [] };
@@ -54,6 +58,12 @@ export default function Page3() {
   const recommendations = base.recommendations || [];
   const timeline = base.timeline || [];
   const personal = base.personal || [];
+  const pdpScore = useMemo(() => calculatePdpScore({
+    media: savedMedia,
+    intro: savedIntro,
+    profile: { ...profile, experience, resumePresent: Boolean(savedResume) },
+    recommendations,
+  }), [savedMedia, savedIntro, profile, experience, recommendations]);
   const jobProfile = useMemo(() => profile.role && profile.role !== "Professional Profile" ? getRoleProfile(profile) : { category: "Professional", title: "Professional Profile", totalYears: 0, focusLabel: "Featured Work", shortlistTools: [], sections: { projects: "Featured Work", proof: "Work Evidence", achievements: "Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Career Journey" }, snapshot: [] }, [profile]);
 
   useEffect(() => {
@@ -161,10 +171,18 @@ export default function Page3() {
             <h1>{profile.name} <b>✓</b></h1>
             <h3>{profile.role}</h3>
             <div className="pdp3-meta"><span>⌖ {profile.location}</span><span>◷ {profile.stats.experience} Years Experience</span><span>↗ {profile.pdpUrl}</span></div>
+            {profile.email && <div className="pdp3-public-email">{profile.email}</div>}
             <p className="pdp3-lead">{profile.introduction}</p>
             <div className="pdp3-actions"><button className="pdp3-primary">✉ Contact Me</button><button className="pdp3-whatsapp">◉ WhatsApp</button><button className="pdp3-ghost">↓ Resume</button></div>
             <div className="pdp3-socials"><span>in</span><span>◎</span><span>Be</span><span>↗</span></div>
-            {<div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>}
+            {<div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>} 
+            <div className="pdp3-score-card">
+              <div className="pdp3-score-main"><strong>{pdpScore.total}</strong><span>/ 100 PDP Score</span><small>{scoreLabel(pdpScore.total)}</small></div>
+              <div className="pdp3-score-bar"><i style={{ width: `${pdpScore.total}%` }} /></div>
+              <div className="pdp3-score-breakdown">
+                <span>Live <b>{pdpScore.livePoints}/40</b></span><span>Original <b>{pdpScore.originalPoints}/20</b></span><span>Volume <b>{pdpScore.volumePoints}/15</b></span><span>References <b>{pdpScore.referencePoints}/10</b></span><span>Profile <b>{pdpScore.completenessPoints}/15</b></span>
+              </div>
+            </div>
           </div>
           <aside className="pdp3-quick">
             <h3><Icon>◉</Icon> Quick Info</h3>

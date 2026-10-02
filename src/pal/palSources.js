@@ -16,6 +16,7 @@ import { matchKnowledge, PAGE_SUGGESTIONS } from "./palKnowledge";
 import { loadMyProfile, loadProfiles, loadDossier, getAssets } from "./palData";
 import { askProfile, isCandidateQuestion } from "./askPdp";
 import { domainVocab } from "./palSpeech";
+import { calculatePdpScore } from "../pdpScore";
 import * as mem from "./palMemory";
 
 const QUESTION = /^(what|how|why|who|when|where|which|is|are|can|could|do|does|kya|kaise|kyun|kab|kaun|kitna)\b/;
@@ -276,6 +277,29 @@ const search = {
   },
 };
 
+/* =============== 75 · live PDP score =============== */
+const scoreSrc = {
+  id: "score", priority: 75,
+  async run(ctx) {
+    if (!/(pdp score|my score|score|marks|points)/.test(ctx.norm)) return null;
+    const { draft: d, media, intro } = await loadMyProfile();
+    const recommendations = d.recommendations || [];
+    const score = calculatePdpScore({
+      media,
+      intro,
+      profile: { ...d, resumePresent: (await getAssets()).resume },
+      recommendations,
+    });
+    return {
+      text: L(
+        `Your current PDP Score is ${score.total}/100. Live proof ${score.livePoints}/40, original uploads ${score.originalPoints}/20, evidence volume ${score.volumePoints}/15, references ${score.referencePoints}/10, profile completeness ${score.completenessPoints}/15.`,
+        `Aapka current PDP Score ${score.total}/100 hai. Live proof ${score.livePoints}/40, original uploads ${score.originalPoints}/20, evidence volume ${score.volumePoints}/15, references ${score.referencePoints}/10, profile completeness ${score.completenessPoints}/15.`
+      ),
+      links: [{ url: "/build-proof", label: L("Add more proof", "Aur proof jodo") }],
+    };
+  },
+};
+
 /* =============== 70 · profile context =============== */
 const profileSrc = {
   id: "profile", priority: 70,
@@ -375,4 +399,4 @@ const fallback = {
   },
 };
 
-[control, ask, followup, search, profileSrc, coach, knowledge, fallback].forEach(registerSource);
+[control, ask, followup, search, scoreSrc, profileSrc, coach, knowledge, fallback].forEach(registerSource);

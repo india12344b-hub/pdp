@@ -64,3 +64,27 @@
 
 /* V5 — relevant experience detail action */
 .pdp3-result-detail{margin-top:10px;border:0;background:transparent;color:#8edcff;font-size:10px;font-weight:800;letter-spacing:.15px;padding:0;cursor:pointer}.pdp3-result-detail:hover{color:#fff}
+
+
+/* PDP Score + public identity */
+.pdp3-public-email {
+  margin-top: -4px;
+  color: #8293a5;
+  font-size: .82rem;
+  letter-spacing: .01em;
+}
+.pdp3-score-card {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(52, 190, 255, .16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(7, 25, 43, .92), rgba(4, 14, 25, .82));
+}
+.pdp3-score-main { display:grid; grid-template-columns:auto 1fr; column-gap:10px; align-items:end; }
+.pdp3-score-main strong { font-size: 2rem; line-height: 1; color: #16cfff; }
+.pdp3-score-main span { font-size: .76rem; color:#b8c9d9; }
+.pdp3-score-main small { grid-column:2; color:#8196aa; margin-top:2px; }
+.pdp3-score-bar { height:5px; margin:11px 0; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; }
+.pdp3-score-bar i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#087fff,#13d8ff); }
+.pdp3-score-breakdown { display:flex; flex-wrap:wrap; gap:7px 10px; color:#8196aa; font-size:.68rem; }
+.pdp3-score-breakdown span b { color:#d9e8f4; font-weight:600; }
