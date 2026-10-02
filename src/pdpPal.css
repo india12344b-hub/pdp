@@ -81,3 +81,14 @@
 .pal-inline-chips button{padding:6px 11px; border-radius:999px; border:1px solid rgba(60,150,200,.5); background:rgba(5,30,50,.8); color:#bfe2f4; font-size:12px; cursor:pointer}
 .pal-inline-chips button:hover{border-color:#17c8ff; color:#fff}
 @media(max-width:400px){.pal-title small{display:none}}
+
+/* voice feedback: live caption, issues, "Did you say…?" */
+.pal-caption{margin:0 12px 8px; padding:8px 12px; border-radius:12px; background:rgba(217,58,74,.14); border:1px solid rgba(255,123,136,.4); font-size:13px; line-height:1.45; color:#ffd9de; max-height:84px; overflow-y:auto}
+.pal-issue{display:flex; gap:8px; align-items:flex-start; margin:0 12px 8px; padding:8px 12px; border-radius:12px; background:rgba(255,184,77,.1); border:1px solid rgba(255,184,77,.4); font-size:12.5px; line-height:1.45; color:#ffe2b3}
+.pal-issue button{margin-left:auto; background:none; border:0; color:inherit; cursor:pointer; font-size:16px; line-height:1}
+.pal-confirm{margin:0 12px 8px; padding:9px 12px; border-radius:12px; background:rgba(40,190,255,.08); border:1px solid rgba(40,190,255,.4); font-size:13px; color:#d6f1ff}
+.pal-confirm b{color:#fff; font-weight:600}
+.pal-confirm>div{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.pal-confirm button{padding:5px 10px; border-radius:999px; border:1px solid rgba(60,150,200,.5); background:rgba(5,30,50,.8); color:#bfe2f4; font-size:12px; cursor:pointer; text-align:left}
+.pal-confirm button:first-child{background:linear-gradient(135deg,#078cff,#0bbcff); border:0; color:#fff}
+.pal-confirm button:hover{border-color:#17c8ff; color:#fff}

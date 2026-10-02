@@ -6,6 +6,8 @@ import { welcome } from "./pal/palSources"; // importing this file also register
 import { PAGE_SUGGESTIONS } from "./pal/palKnowledge";
 import { LANGS, L, pick, clean } from "./pal/palLang";
 import * as mem from "./pal/palMemory";
+import { useVoiceInput, VOICE_ISSUES } from "./pal/useVoiceInput";
+import { domainVocab } from "./pal/palSpeech";
 
 /*
   PDP Pal — floating, draggable, API-free assistant for the whole site.
@@ -29,7 +31,6 @@ function readPos() {
 const savePos = (p) => { try { window.localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {} };
 
 export default function PdpPal() {
-  const SR = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
   const page = useRef(pageKey()).current;
 
   const sessionRef = useRef(null);
@@ -46,10 +47,9 @@ export default function PdpPal() {
   const [open, setOpen] = useState(false);
   const [hint, setHint] = useState(true);
   const [input, setInput] = useState("");
-  const [listening, setListening] = useState(false);
+  const [pending, setPending] = useState(null); // low-confidence voice result waiting for "Did you say…?"
   const [speakOn, setSpeakOn] = useState(false);
 
-  const recRef = useRef(null);
   const listRef = useRef(null);
   const dragRef = useRef(null);
   const bootRef = useRef(false);
@@ -121,7 +121,7 @@ export default function PdpPal() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
   useEffect(() => { const t = setTimeout(() => setHint(false), 8000); return () => clearTimeout(t); }, []);
-  useEffect(() => () => { try { recRef.current?.abort(); window.speechSynthesis?.cancel(); } catch {} }, []);
+  useEffect(() => () => { try { window.speechSynthesis?.cancel(); } catch {} }, []);
 
   /* ---------- drag (launcher + panel header) ---------- */
   const bindDrag = (onTap) => ({
@@ -189,31 +189,22 @@ export default function PdpPal() {
   };
 
   /* ---------- voice in ---------- */
-  const toggleMic = () => {
-    if (!SR) return addPal({ text: L("Voice input isn't available in this browser. Try Chrome or Edge, or type.", "Is browser me voice input available nahi hai. Chrome ya Edge try karo, ya type karo.") }, lang);
-    if (listening) { recRef.current?.stop(); return; }
-    try {
-      window.speechSynthesis?.cancel();
-      const rec = new SR();
-      rec.lang = LANGS[lang].speech;
-      rec.interimResults = true;
-      rec.continuous = false;
-      let finalText = "";
-      rec.onresult = (e) => {
-        let interim = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) finalText += t; else interim += t;
-        }
-        setInput(finalText || interim);
-      };
-      rec.onerror = () => setListening(false);
-      rec.onend = () => { setListening(false); if (finalText.trim()) handle(finalText); };
-      recRef.current = rec;
-      rec.start();
-      setListening(true);
-    } catch { setListening(false); }
+  const getVocab = () => {
+    const sel = sessionRef.current.selectedCandidate;
+    const lr = sessionRef.current.lastResults || [];
+    return domainVocab([sel?.name, ...(sel?.companies || []), ...(sel?.skills || []), ...lr.flatMap((c) => [c.name, ...(c.companies || []), ...(c.skills || [])])]);
   };
+  const voice = useVoiceInput({
+    lang,
+    getVocab,
+    onResult: (r) => {
+      if (r.confident) { setInput(""); handle(r.text); }
+      else { setPending(r); setInput(r.text); } // not sure I heard that right → ask first
+    },
+  });
+  const listening = voice.listening;
+  const toggleMic = () => { setPending(null); voice.toggle(); };
+  const otherLang = lang === "en" ? "hi" : "en";
 
   /* ---------- layout ---------- */
   const pw = Math.min(360, vp.w - MARGIN * 2);
@@ -263,15 +254,28 @@ export default function PdpPal() {
                 )}
               </div>
             ))}
-            {listening && <div className="pal-msg pal"><p>🎙 {t("Listening…", "Sun rahi hoon…")}</p></div>}
           </div>
+
+          {listening && <div className="pal-caption">🎙 {voice.caption || t("Listening… speak naturally, take your time", "Sun rahi hoon… aaram se boliye")}</div>}
+          {!listening && voice.issue && <div className="pal-issue">{pick(VOICE_ISSUES[voice.issue], lang)}<button type="button" onClick={voice.clearIssue} aria-label="Dismiss">×</button></div>}
+          {!listening && pending && (
+            <div className="pal-confirm">
+              <span>{t("Did you say:", "Kya aapne ye kaha:")} <b>“{pending.text}”</b></span>
+              <div>
+                <button type="button" onClick={() => { const x = pending.text; setPending(null); handle(x); }}>{t("Yes, send", "Haan, bhejo")}</button>
+                {pending.alternatives?.map((a) => <button key={a} type="button" onClick={() => { setPending(null); handle(a); }}>{a}</button>)}
+                <button type="button" onClick={() => { setPending(null); voice.start(); }}>{t("Try again", "Dobara bolo")}</button>
+                <button type="button" onClick={() => { setPending(null); changeLang(otherLang); setTimeout(voice.start, 150); }}>{t("Try in Hinglish", "Try in English")}</button>
+              </div>
+            </div>
+          )}
 
           <div className="pal-quick">
             {quick.map((q) => { const label = pick(q.label, lang); return <button key={label} type="button" onClick={() => handle(q.send)}>{label}</button>; })}
           </div>
 
-          <form className="pal-input" onSubmit={(e) => { e.preventDefault(); handle(input); }}>
-            <button type="button" className={`pal-mic ${listening ? "live" : ""}`} onClick={toggleMic} aria-label="Voice input" title={SR ? t("Speak", "Bolo") : t("Voice not supported in this browser", "Is browser me voice supported nahi")}>🎙</button>
+          <form className="pal-input" onSubmit={(e) => { e.preventDefault(); setPending(null); handle(input); }}>
+            <button type="button" className={`pal-mic ${listening ? "live" : ""}`} onClick={toggleMic} aria-label="Voice input" title={voice.supported ? t("Speak — take your time, tap again to finish", "Bolo — aaram se, khatam hone par dobara dabao") : t("Voice not supported in this browser", "Is browser me voice supported nahi")}>🎙</button>
             <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t("Type or speak…", "Type karo ya bolo…")} />
             <button type="submit" className="pal-send" disabled={!input.trim()} aria-label="Send">→</button>
           </form>

@@ -1,6 +1,7 @@
 /*
   PDP Pal — built-in sources, in priority order:
     100 control     greetings, help, language switch, "forget me", jump-to-page, recap of last visit
+     92 ask         "Ask this PDP": questions about ONE candidate, answered only from their documented evidence
      90 followup    "the second one", "how much experience does he have", "shortlist him"  (uses session)
      80 search      recruiter requirement → live profiles
      70 profile     questions about the profile on screen ("my experience at XYZ")
@@ -12,7 +13,9 @@
 import { registerSource } from "./palEngine";
 import { L, pick, tokenize, expand } from "./palLang";
 import { matchKnowledge, PAGE_SUGGESTIONS } from "./palKnowledge";
-import { loadMyProfile, loadProfiles, getAssets } from "./palData";
+import { loadMyProfile, loadProfiles, loadDossier, getAssets } from "./palData";
+import { askProfile, isCandidateQuestion } from "./askPdp";
+import { domainVocab } from "./palSpeech";
 import * as mem from "./palMemory";
 
 const QUESTION = /^(what|how|why|who|when|where|which|is|are|can|could|do|does|kya|kaise|kyun|kab|kaun|kitna)\b/;
@@ -107,6 +110,36 @@ const control = {
   },
 };
 
+/* =============== 92 · Ask this PDP =============== */
+const clipLine = (s, n = 110) => { const t = String(s || "").replace(/\s+/g, " ").trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
+
+const ask = {
+  id: "ask", priority: 92,
+  async run(ctx) {
+    const { norm, page, session } = ctx;
+    const list = session.lastResults || [];
+    const target = session.selectedCandidate || (list.length === 1 ? list[0] : null);
+    const onProfile = page === "profile";
+    if (!isCandidateQuestion(norm, ctx.raw, { onProfile, hasTarget: !!target })) return null;
+    // generic PDP questions ("what is proof of work?") belong to the knowledge base, unless the question is clearly about the candidate
+    if (!/\b(he|she|his|her|him|they|them|their|uska|uski|unka|unki|candidate)\b/.test(norm) && matchKnowledge(norm, page).entry) return null;
+
+    const dossier = await loadDossier(target?.id || "me");
+    if (!dossier) return null;
+    const res = askProfile(ctx.raw, norm, dossier);
+    if (!res) return null;
+
+    const lines = res.evidence.slice(0, 3).map((e) => `• ${e.company ? `${e.company} — ` : ""}${e.title}${e.text ? `: ${clipLine(e.text)}` : ""}`);
+    return {
+      text: (lang) => [pick(res.headline, lang), ...lines].join("\n"),
+      chips: res.followups.map((f) => ({ label: f.label, send: f.q })),
+      links: onProfile ? [] : [link("/pdp/me", "Open this PDP", "Ye PDP kholo")],
+      actions: onProfile && res.focusCompany ? [{ type: "event", name: "pdp-pal:focus-experience", detail: { company: res.focusCompany } }] : [],
+      session: { lastIntent: "ask_pdp", selectedCandidate: target || session.selectedCandidate || null },
+    };
+  },
+};
+
 /* =============== 90 · followup (session-aware) =============== */
 const ORD = [["first|1st|pehla|pehle", 0], ["second|2nd|dusra|doosra|dusre", 1], ["third|3rd|teesra|tisra", 2], ["fourth|4th|chautha", 3], ["fifth|5th|panchva", 4], ["last|aakhri|aakhir", -1]];
 const ordinal = (norm) => { for (const [re, i] of ORD) if (new RegExp(`\\b(${re})\\b`).test(norm)) return i; return null; };
@@ -188,7 +221,9 @@ const search = {
   async run(ctx) {
     if (!searchLike(ctx)) return null;
     const need = yearsOf(ctx.norm);
-    const tokens = tokenize(ctx.norm);
+    let tokens = tokenize(ctx.norm);
+    // long / rambling requirement: keep the words PDP understands (roles, skills, areas, cities) and ignore the filler
+    if (tokens.length > 5) { const vocab = domainVocab(); const known = tokens.filter((t) => vocab.has(t)); if (known.length) tokens = known; }
     const profiles = await loadProfiles();
 
     if (!profiles.length) {
@@ -248,6 +283,7 @@ const profileSrc = {
     const { norm, page } = ctx;
     const mine = /\b(my|mera|meri|mere|apna|apni)\b/.test(norm);
     if (!(page === "profile" || mine)) return null;
+    if (!mine && matchKnowledge(norm, page).entry) return null; // "what is proof of work?" is a PDP question, not about this profile
     if (/^(how|can i|where do i|where can i|kaise)\b/.test(norm) && !/how much|how many|kitna|kitne/.test(norm)) return null;
 
     const attrKind = ATTR.find(([, re]) => re.test(norm))?.[0];
@@ -339,4 +375,4 @@ const fallback = {
   },
 };
 
-[control, followup, search, profileSrc, coach, knowledge, fallback].forEach(registerSource);
+[control, ask, followup, search, profileSrc, coach, knowledge, fallback].forEach(registerSource);

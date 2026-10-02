@@ -145,6 +145,10 @@ export const KB = [
     keywords: ["how do i contact a candidate", "contact kaise", "contact", "reach out", "connect with", "message candidate", "call candidate"],
     a: L("Every PDP has Contact, WhatsApp and Email actions, so you can reach the professional directly.",
          "Har PDP par Contact, WhatsApp aur Email actions hote hain, taaki aap professional se seedha baat kar sako.") },
+  { id: "ask-this-pdp", cat: "Recruiters", pages: ["recruiter", "profile"], q: L("What is Ask this PDP?", "Ask this PDP kya hai?"),
+    keywords: ["what is ask this pdp", "ask this pdp", "ask pdp", "ask about a candidate", "ask a question about candidate", "question about candidate"],
+    a: L("Ask this PDP lets you ask questions about one professional — like “Has she handled distributor management?” — and get answers pulled only from that person's documented experience and proof, with the evidence shown. If something isn't documented, it says so instead of guessing.",
+         "Ask this PDP se aap ek professional ke baare me sawal pooch sakte ho — jaise “Kya unhone distributor management handle kiya hai?” — aur jawab sirf unke documented experience aur proof se aata hai, evidence ke saath. Jo documented nahi hota, uske liye wo andaza nahi lagata, saaf bata deta hai.") },
   { id: "job-requirements", cat: "Recruiters", pages: ["recruiter"], q: L("Can I paste a job description?", "Kya job description paste kar sakta hoon?"),
     keywords: ["can i paste a job description", "paste jd", "job description", "jd", "job requirement", "requirement box"],
     a: L("Yes. Paste a JD or describe the role in the requirement box. PDP maps it to relevant experience areas, and you can switch each filter on or off.",
@@ -166,8 +170,8 @@ export const PAGE_SUGGESTIONS = {
   professionals: [S("What is PDP?", "PDP kya hai?", "what is pdp"), S("Create my profile", "Profile banao", "how do i create a profile"), S("What is Proof of Work?", "Proof of Work kya hai?", "what is proof of work"), S("Is it authentic?", "Authenticity?", "how does authenticity work")],
   resume: [S("How do I upload my resume?", "Resume kaise upload karun?", "how do i upload my resume"), S("What next?", "Aage kya?", "what should i do next"), S("What is Proof of Work?", "Proof of Work kya hai?", "what is proof of work")],
   proof: [S("How do I upload proof?", "Proof kaise upload karun?", "how do i upload proof"), S("What photos should I add?", "Kaunsi photos?", "what photos should i add"), S("How does authenticity work?", "Authenticity?", "how does authenticity work"), S("What next?", "Aage kya?", "what should i do next")],
-  profile: [S("How do I share my profile?", "Profile share kaise karun?", "how do i share my profile"), S("My experience", "Mera experience", "what is my experience"), S("What should I do next?", "Aage kya karun?", "what should i do next")],
-  recruiter: [S("FMCG sales manager 5 years", "FMCG sales manager 5 saal", "fmcg sales manager 5 years"), S("Product designer", "Product designer", "product designer"), S("How do I search candidates?", "Search kaise karun?", "how do i search candidates")],
+  profile: [S("How do I share my profile?", "Profile share kaise karun?", "how do i share my profile"), S("Has he worked in FMCG?", "Kya FMCG me kaam kiya?", "has he worked in fmcg"), S("Tell me about this candidate", "Is candidate ke baare me batao", "tell me about this candidate"), S("What should I do next?", "Aage kya karun?", "what should i do next")],
+  recruiter: [S("FMCG sales manager 5 years", "FMCG sales manager 5 saal", "fmcg sales manager 5 years"), S("Product designer", "Product designer", "product designer"), S("What is Ask this PDP?", "Ask this PDP kya hai?", "what is ask this pdp")],
 };
 
 /* ---------- matching ---------- */

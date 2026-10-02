@@ -1,0 +1,44 @@
+/* Ask this PDP */
+.ask-pdp{background:radial-gradient(circle at 92% 0%,rgba(18,213,255,.10),transparent 34%),linear-gradient(145deg,rgba(4,25,40,.86),rgba(2,14,25,.92));border-color:rgba(18,181,255,.28)}
+.ask-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.ask-kicker{font-size:11px;letter-spacing:1.4px;font-weight:800;color:var(--green)}
+.ask-head h2{margin:4px 0 4px}.ask-head p{margin:0;font-size:var(--fs-xs);color:var(--text-3)}
+.ask-lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:0 0 auto}
+.ask-lang button{border:0;background:transparent;color:#9fc0d3;padding:7px 12px;font-size:12px;cursor:pointer}
+.ask-lang button.on{background:linear-gradient(135deg,#078cff,#0bbcff);color:#fff}
+.ask-form{display:flex;gap:8px;align-items:center}
+.ask-form input{flex:1;min-width:0;padding:12px 16px;border-radius:999px;border:1px solid rgba(90,160,220,.3);background:#06182e;color:#eaf4fb;font:inherit;font-size:var(--fs-sm);outline:none}
+.ask-form input:focus{border-color:rgba(40,190,255,.7)}
+.ask-mic,.ask-send{flex:0 0 auto;height:44px;border-radius:999px;border:1px solid rgba(90,160,220,.35);background:#0b2a48;color:#e6f6ff;cursor:pointer}
+.ask-mic{width:44px;font-size:17px}.ask-mic.live{background:#d93a4a;border-color:#ff7b88;animation:askRec 1s ease-in-out infinite}
+.ask-send{padding:0 20px;font-weight:700;background:linear-gradient(135deg,#078cff,#0bbcff);border:0}.ask-send:disabled{opacity:.45;cursor:not-allowed}
+.ask-note{margin-top:10px;padding:9px 13px;border-radius:12px;font-size:var(--fs-xs);background:rgba(40,190,255,.08);border:1px solid rgba(40,190,255,.35);color:#d6f1ff}
+.ask-note.live{background:rgba(217,58,74,.14);border-color:rgba(255,123,136,.4);color:#ffd9de}
+.ask-note.warn{background:rgba(255,184,77,.1);border-color:rgba(255,184,77,.4);color:#ffe2b3}
+.ask-note b{color:#fff;font-weight:600}
+.ask-note-actions{display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:10px}
+.ask-note-actions button{padding:4px 10px;border-radius:999px;border:1px solid rgba(60,150,200,.5);background:rgba(5,30,50,.8);color:#bfe2f4;font-size:12px;cursor:pointer}
+.ask-chips{display:flex;gap:7px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:thin}
+.ask-chips button{flex:0 0 auto;padding:7px 12px;border-radius:999px;border:1px solid rgba(60,150,200,.4);background:rgba(5,30,50,.7);color:#bfe2f4;font-size:var(--fs-xs);cursor:pointer;white-space:nowrap}
+.ask-chips button:hover{border-color:#17c8ff;color:#fff}.ask-chips.small{padding-top:10px}
+.ask-answer{margin-top:14px;display:grid;gap:8px}
+.ask-q{justify-self:end;max-width:86%;padding:9px 14px;border-radius:14px 14px 4px 14px;background:linear-gradient(90deg,#078cff,#0bbcff);color:#fff;font-size:var(--fs-sm)}
+.ask-a{padding:14px;border:1px solid rgba(61,136,178,.3);border-radius:12px;background:rgba(3,18,31,.65)}
+.ask-a>p{margin:8px 0 0;font-size:var(--fs-sm);line-height:1.6;color:var(--text)}
+.ask-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.3px}
+.ask-badge.yes{background:rgba(85,231,208,.14);color:#6ff0d9;border:1px solid rgba(85,231,208,.4)}
+.ask-badge.partial{background:rgba(255,209,90,.12);color:#ffd15a;border:1px solid rgba(255,209,90,.4)}
+.ask-badge.no{background:rgba(255,255,255,.06);color:#c3d3df;border:1px solid rgba(255,255,255,.18)}
+.ask-badge.info{background:rgba(40,190,255,.12);color:#7fe0ff;border:1px solid rgba(40,190,255,.4)}
+.ask-evidence{display:grid;gap:8px;margin-top:12px}
+.ask-ev{display:flex;gap:10px;padding:10px 12px;border:1px solid rgba(61,136,178,.25);border-radius:10px;background:rgba(2,15,27,.55)}
+.ask-ev img{width:72px;height:56px;object-fit:cover;border-radius:7px;flex:0 0 auto}
+.ask-ev small,.ask-ev strong,.ask-ev span,.ask-ev em{display:block}
+.ask-ev small{font-size:10px;letter-spacing:1.1px;color:var(--green);font-weight:800}
+.ask-ev strong{font-size:var(--fs-xs);color:#fff;margin-top:2px}
+.ask-ev span{font-size:var(--fs-xs);color:var(--text-2);line-height:1.5;margin-top:3px}
+.ask-ev em{font-style:normal;font-size:11px;color:#8edcff;margin-top:5px}
+.ask-ev button{margin-top:6px;border:0;background:none;color:#8edcff;font-size:11px;font-weight:800;padding:0;cursor:pointer}
+.ask-empty{padding:18px;border:1px dashed rgba(85,155,195,.3);border-radius:10px;color:var(--text-3);font-size:var(--fs-xs);text-align:center}
+@keyframes askRec{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@media(max-width:600px){.ask-head{flex-direction:column}.ask-note-actions{display:flex;margin:8px 0 0}.ask-q{max-width:100%}}

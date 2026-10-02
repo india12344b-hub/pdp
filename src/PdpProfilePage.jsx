@@ -4,6 +4,7 @@ import { IMAGES } from "./pdpMedia";
 import { getMedia, getResume, getIntro, getProfile } from "./pdpStorage";
 import { getDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
+import AskThisPdp from "./AskThisPdp";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
@@ -171,6 +172,14 @@ export default function Page3() {
             <div className="pdp3-divider" /><strong className="pdp3-label">Skills</strong><div className="pdp3-chips">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div>
           </aside>
         </section>
+
+        <AskThisPdp
+          profile={profile}
+          experience={experience}
+          media={savedMedia}
+          suggestions={shortlistTools}
+          onOpenExperience={(company) => { const i = experience.findIndex(x => x.company === company); if (i >= 0) { setSelectedExperience(i); requestAnimationFrame(() => document.getElementById("experience")?.scrollIntoView({ behavior: "smooth", block: "start" })); } }}
+        />
 
         <section className="pdp3-card-section pdp3-snapshot" id="snapshot">
           <SectionHead icon="✦" title="Career Snapshot" subtitle="Select a skill or experience area to see the supporting work below." />
