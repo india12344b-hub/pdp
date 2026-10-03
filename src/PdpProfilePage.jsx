@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getRoleProfile, buildShortlistTools, getShortlistTerms, getShortlistFallback } from "./pdpProfileData";
 import { IMAGES } from "./pdpMedia";
-import { getMedia, getResume, getIntro, getProfile } from "./pdpStorage";
+import { getMedia, getResume, getIntro, getProfile, getAuthRecords } from "./pdpStorage";
 import { getDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 import AskThisPdp from "./AskThisPdp";
 import { calculatePdpScore, scoreLabel } from "./pdpScore";
+import AuthBadge from "./auth/AuthBadge";
+import { attachAuthenticity, summarise } from "./auth/authLedger";
 
 function Icon({ children }) { return <span className="pdp3-icon" aria-hidden="true">{children}</span>; }
 function Arrow() { return <span aria-hidden="true">→</span>; }
@@ -68,12 +70,12 @@ export default function Page3() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getMedia(), getResume(), getIntro(), getProfile()]).then(([records, resume, intro, cloudProfile]) => {
+    Promise.all([getMedia(), getResume(), getIntro(), getProfile(), getAuthRecords().catch(() => [])]).then(([records, resume, intro, cloudProfile, authRecords]) => {
       if (!active) return;
       if (cloudProfile?.profile) setDraft(cloudProfile.profile);
       setSavedResume(resume || null);
-      setSavedIntro(intro?.file ? { ...intro, url: URL.createObjectURL(intro.file) } : null);
-      setSavedMedia((records || []).map(item => ({ ...item, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") })));
+      setSavedIntro(intro?.file ? attachAuthenticity([{ ...intro, id: "intro", url: URL.createObjectURL(intro.file) }], authRecords || [])[0] : null);
+      setSavedMedia(attachAuthenticity((records || []).map(item => ({ ...item, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") })), authRecords || []));
     }).catch(() => {});
     return () => {
       active = false;
@@ -94,7 +96,11 @@ export default function Page3() {
     image: item.url,
     uploaded: true,
     id: item.id,
+    authTier: item.authTier,
+    captureMode: item.captureMode,
+    originalDeclared: item.originalDeclared,
   }));
+  const authSummary = useMemo(() => summarise(savedMedia, savedIntro), [savedMedia, savedIntro]);
   const uploadedProjects = savedMedia.map((item, index) => ({
     title: item.note || `${item.category || "Professional"} Evidence`,
     result: item.company ? `Evidence from ${item.company}` : "Candidate-uploaded professional evidence",
@@ -182,6 +188,12 @@ export default function Page3() {
               <div className="pdp3-score-breakdown">
                 <span>Live <b>{pdpScore.livePoints}/40</b></span><span>Original <b>{pdpScore.originalPoints}/20</b></span><span>Volume <b>{pdpScore.volumePoints}/15</b></span><span>References <b>{pdpScore.referencePoints}/10</b></span><span>Profile <b>{pdpScore.completenessPoints}/15</b></span>
               </div>
+              {authSummary.total > 0 && <div className="mae-summary">
+                {authSummary.live > 0 && <span className="mae-badge live compact"><i>●</i>{authSummary.live} captured live</span>}
+                {authSummary.declared > 0 && <span className="mae-badge declared compact"><i>✓</i>{authSummary.declared} declared · screened</span>}
+                {authSummary.review > 0 && <span className="mae-badge review compact"><i>◐</i>{authSummary.review} under review</span>}
+                {authSummary.legacy > 0 && <span className="mae-badge legacy compact"><i>○</i>{authSummary.legacy} declared · not screened</span>}
+              </div>}
             </div>
           </div>
           <aside className="pdp3-quick">
@@ -268,7 +280,7 @@ export default function Page3() {
 
         <section className="pdp3-card-section" id="proof">
           <SectionHead icon="▤" title={jobProfile.sections.proof} subtitle="Videos, photos, presentations and more — real proof behind the profile." action={{ target: "proof", label: "View All Media" }} />
-          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.id || item.title}><div className="pdp3-media-img"><MediaVisual item={item} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span></div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p></div>}
+          {companyEvidence.length ? <div className="pdp3-horizontal-scroll pdp3-media-grid">{companyEvidence.map(item => <article className="pdp3-media-card" key={item.id || item.title}><div className="pdp3-media-img"><MediaVisual item={item} alt={item.title} /><span className="pdp3-media-play">{item.type === "video" ? "▶" : "▦"}</span></div><div><h3>{item.title}</h3><span>{item.meta} · {item.company}</span>{item.uploaded && <div className="mae-tile-badges" style={{ padding: "7px 0 0" }}><AuthBadge item={item} compact /></div>}</div></article>)}</div> : <div className="pdp3-company-fallback compact-empty"><span className="pdp3-detail-kicker">NO MEDIA YET</span><h3>{selectedCompany ? `${selectedCompany} work evidence` : "Work evidence"}</h3><p>{selectedCompany ? (experience[selectedExperience]?.highlight || experience[selectedExperience]?.desc) : "Videos, photos, presentations and other candidate-uploaded proof will appear here when available."}</p></div>}
         </section>
 
         <section className="pdp3-three-grid">

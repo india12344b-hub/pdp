@@ -3,7 +3,8 @@
   To connect new sources (backend search, jobs API...) change these functions; nothing else in Pal needs to change.
 */
 import { getDraft } from "../pdpDraft";
-import { getMedia, getProfile, getAssetStatus, getIntro } from "../pdpStorage";
+import { getMedia, getProfile, getAssetStatus, getIntro, getAuthRecords } from "../pdpStorage";
+import { attachAuthenticity } from "../auth/authLedger";
 
 export async function loadMyProfile() {
   let draft = getDraft();
@@ -12,6 +13,11 @@ export async function loadMyProfile() {
   let intro = null;
   try { media = (await getMedia()) || []; } catch {}
   try { intro = await getIntro(); } catch {}
+  try { // attach Media Authenticity records, so Pal's PDP Score matches the profile page
+    const records = await getAuthRecords();
+    media = attachAuthenticity(media, records);
+    if (intro) intro = attachAuthenticity([{ ...intro, id: "intro" }], records)[0];
+  } catch {}
   return { draft, media, intro, mediaCount: media.length };
 }
 

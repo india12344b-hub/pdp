@@ -1,6 +1,6 @@
 const DB_NAME = "pdp-local-data";
-const DB_VERSION = 1;
-const STORES = { resume: "resume", media: "media", intro: "intro" };
+const DB_VERSION = 2; // v2 adds the "ledger" store (authenticity records)
+const STORES = { resume: "resume", media: "media", intro: "intro", ledger: "ledger" };
 const TOKEN_KEY = "pdp-profile-token-v1";
 
 function token() {
@@ -62,15 +62,15 @@ export async function getResume() {
 }
 export async function clearResume() { try { await api("/api/resume", { method: "DELETE" }); } catch {} return withStore(STORES.resume, "readwrite", store => store.delete("current")); }
 
-export async function saveIntro(file) {
+export async function saveIntro(file, metadata = {}) {
   if (!file) return null;
-  try { const form = new FormData(); form.append("file", file); const remote = await apiJson("/api/intro", { method: "POST", body: form }); const record = { ...remote, file, source: "cloudflare" }; await withStore(STORES.intro, "readwrite", store => store.put({ id: "current", ...record })); return record; }
-  catch { const record = { id: "current", name: file.name, size: file.size, type: file.type, lastModified: file.lastModified, file, source: "local" }; await withStore(STORES.intro, "readwrite", store => store.put(record)); return record; }
+  try { const form = new FormData(); form.append("file", file); Object.entries(metadata).forEach(([k, v]) => form.append(k, v ?? "")); const remote = await apiJson("/api/intro", { method: "POST", body: form }); const record = { ...remote, ...metadata, file, source: "cloudflare" }; await withStore(STORES.intro, "readwrite", store => store.put({ id: "current", ...record })); return record; }
+  catch { const record = { id: "current", name: file.name, size: file.size, type: file.type, lastModified: file.lastModified, ...metadata, file, source: "local" }; await withStore(STORES.intro, "readwrite", store => store.put(record)); return record; }
 }
 export async function getIntro() {
   try { const remote = await apiJson("/api/intro"); if (!remote?.exists) return withStore(STORES.intro, "readonly", store => store.get("current")); const file = await apiFile("/api/file/intro"); return { ...remote, file, source: "cloudflare" }; } catch { return withStore(STORES.intro, "readonly", store => store.get("current")); }
 }
-export async function clearIntro() { try { await api("/api/intro", { method: "DELETE" }); } catch {} return withStore(STORES.intro, "readwrite", store => store.delete("current")); }
+export async function clearIntro() { try { await api("/api/intro", { method: "DELETE" }); } catch {} deleteAuthRecord("intro").catch(() => {}); return withStore(STORES.intro, "readwrite", store => store.delete("current")); }
 
 export async function saveMedia(file, metadata = {}) {
   if (!file) return null;
@@ -79,7 +79,7 @@ export async function saveMedia(file, metadata = {}) {
     const remote = await apiJson("/api/media", { method: "POST", body: form });
     const record = { ...remote, ...metadata, file, source: "cloudflare" }; await withStore(STORES.media, "readwrite", store => store.put(record)); return record;
   } catch {
-    const id = metadata.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`; const record = { id, name: file.name, size: file.size, mimeType: file.type, type: file.type.startsWith("video/") ? "video" : "image", category: metadata.category || "Other Professional Evidence", company: metadata.company || "", note: metadata.note || "", createdAt: Date.now(), file, source: "local" };
+    const id = metadata.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`; const record = { id, name: file.name, size: file.size, mimeType: file.type, type: file.type.startsWith("video/") ? "video" : "image", category: metadata.category || "Other Professional Evidence", company: metadata.company || "", note: metadata.note || "", createdAt: Date.now(), ...metadata, file, source: "local" };
     await withStore(STORES.media, "readwrite", store => store.put(record)); return record;
   }
 }
@@ -87,8 +87,8 @@ export async function getMedia() {
   try { const remote = await apiJson("/api/media"); return (remote || []).map(item => ({ ...item, url: item.url || `/api/file/media/${item.id}?token=${encodeURIComponent(token())}`, source: "cloudflare" })); }
   catch { const result = await withStore(STORES.media, "readonly", store => store.getAll()); return (result || []).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); }
 }
-export async function deleteMedia(id) { try { await api(`/api/media/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {} return withStore(STORES.media, "readwrite", store => store.delete(id)); }
-export async function clearMedia() { try { await api("/api/media", { method: "DELETE" }); } catch {} return withStore(STORES.media, "readwrite", store => store.clear()); }
+export async function deleteMedia(id) { try { await api(`/api/media/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {} deleteAuthRecord(id).catch(() => {}); return withStore(STORES.media, "readwrite", store => store.delete(id)); }
+export async function clearMedia() { try { await api("/api/media", { method: "DELETE" }); } catch {} try { const all = await getAuthRecords(); await Promise.all(all.filter(r => r.kind !== "intro").map(r => deleteAuthRecord(r.id))); } catch {} return withStore(STORES.media, "readwrite", store => store.clear()); }
 
 export async function saveProfile(profile) {
   try { return await apiJson("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profile) }); }
@@ -106,4 +106,27 @@ export async function getAssetStatus() {
   };
   const [resume, intro] = await Promise.all([check("/api/resume", STORES.resume), check("/api/intro", STORES.intro)]);
   return { resume, intro };
+}
+
+/* ---------- Authenticity ledger (Media Authenticity Engine records) ----------
+   Local-first: always kept in IndexedDB on this device. Also sent to /api/authenticity when the worker supports it
+   (see WORKER_AUTHENTICITY_SPEC.md); until then the server simply ignores it. */
+export async function saveAuthRecord(record) {
+  if (!record?.id) return null;
+  await withStore(STORES.ledger, "readwrite", store => store.put(record));
+  try { await api("/api/authenticity", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(record) }); } catch {}
+  return record;
+}
+export async function getAuthRecords() {
+  let local = [];
+  try { local = (await withStore(STORES.ledger, "readonly", store => store.getAll())) || []; } catch {}
+  let remote = [];
+  try { const r = await apiJson("/api/authenticity"); if (Array.isArray(r)) remote = r; } catch {}
+  const map = new Map();
+  [...remote, ...local].forEach(r => { if (r?.id) { const prev = map.get(String(r.id)); if (!prev || (r.createdAt || "") >= (prev.createdAt || "")) map.set(String(r.id), r); } });
+  return [...map.values()];
+}
+export async function deleteAuthRecord(id) {
+  try { await api(`/api/authenticity/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {}
+  try { return await withStore(STORES.ledger, "readwrite", store => store.delete(id)); } catch { return null; }
 }
