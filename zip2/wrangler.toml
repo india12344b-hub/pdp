@@ -1,0 +1,21 @@
+name = "pdp"
+main = "worker/index.js"
+compatibility_date = "2026-09-29"
+
+routes = [
+  { pattern = "mypdp.in/*", zone_name = "mypdp.in" },
+  { pattern = "www.mypdp.in/*", zone_name = "mypdp.in" }
+]
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "PDP_DB"
+database_name = "pdp-db"
+database_id = "3d9f0c02-32c0-4966-bef6-ca3eebd7ff2e"
+
+[[r2_buckets]]
+binding = "PDP_MEDIA"
+bucket_name = "pdp-media"
