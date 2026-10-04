@@ -40,6 +40,7 @@ export default function CandidateMediaPage() {
   const [camera, setCamera] = useState(null);     // { mode: "photo"|"video", kind: "evidence"|"intro" }
   const [reviewQueue, setReviewQueue] = useState(null); // [{ file, mode, liveEvidence, kind }]
   const [details, setDetails] = useState(null);   // item whose authenticity record is open
+  const [frozen, setFrozen] = useState(getDraft().accountStatus === "frozen"); // set by PDP after a confirmed violation (the server must enforce it too)
   const fileRef = useRef(null);
   const introRef = useRef(null);
 
@@ -47,7 +48,7 @@ export default function CandidateMediaPage() {
     let active = true;
     Promise.all([getResume(), getMedia(), getIntro(), getProfile(), getAuthRecords()]).then(([resume, media, savedIntro, cloudProfile, records]) => {
       if (!active) return;
-      if (cloudProfile?.profile) setDraft(saveDraft(cloudProfile.profile));
+      if (cloudProfile?.profile) { setDraft(saveDraft(cloudProfile.profile)); setFrozen(cloudProfile.profile.accountStatus === "frozen"); }
       setResumeRecord(resume || null);
       setLedger(records || []);
       const restored = attachAuthenticity((media || []).map(item => ({ ...item, file: item.file, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") })), records || []);
@@ -71,7 +72,7 @@ export default function CandidateMediaPage() {
 
   /* ---------- the four ways in ---------- */
   // 📷 Capture with PDP camera
-  const openCamera = (mode = "photo", kind = "evidence") => setCamera({ mode, kind });
+  const openCamera = (mode = "photo", kind = "evidence") => { if (frozen) return; setCamera({ mode, kind }); };
   const onCameraCapture = (file, liveEvidence) => {
     const kind = camera?.kind || "evidence";
     setCamera(null);
@@ -79,12 +80,13 @@ export default function CandidateMediaPage() {
   };
   // 📤 Upload existing media → ✅ declaration + 🔍 screening happen inside AuthReviewModal
   const queueFiles = (files) => {
+    if (frozen) return;
     const next = Array.from(files || []).filter(file => file.type.startsWith("image/") || file.type.startsWith("video/"));
     if (!next.length) return;
     setReviewQueue(next.map(file => ({ file, mode: "upload", liveEvidence: null, kind: "evidence" })));
   };
   const queueIntro = (file) => {
-    if (!file || !file.type.startsWith("video/")) return;
+    if (frozen || !file || !file.type.startsWith("video/")) return;
     setReviewQueue([{ file, mode: "upload", liveEvidence: null, kind: "intro" }]);
   };
 
@@ -134,6 +136,8 @@ export default function CandidateMediaPage() {
       </header>
 
       <main className="media-shell">
+        {frozen && <div className="mae-frozen" role="alert"><b>🔒 {t("Your PDP account is frozen", "Aapka PDP account freeze hai")}</b>{t("AI-generated, edited or wrongly declared media was found on your profile, so adding new proof is switched off. Please contact PDP support to have your account reviewed.", "Aapke profile par AI-generated, edited ya galat declare kiya hua media mila, isliye naya proof jodna band hai. Account review ke liye PDP support se sampark karo.")}</div>}
+
         <section className="media-hero">
           <div className="media-kicker">BUILD YOUR PDP</div>
           <h1>Now show the work<br /><em>behind your career.</em></h1>

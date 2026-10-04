@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { screenMedia, headline } from "./authEngine";
-import { statementsFor, emptyDeclaration, isDeclarationComplete, ORIGINS, DECLARATION_VERSION } from "./authDeclaration";
+import { statementsFor, emptyDeclaration, isDeclarationComplete, ORIGINS, DECLARATION_VERSION, FREEZE_WARNING } from "./authDeclaration";
 import { loadMemory } from "../pal/palMemory";
 import "./authStyles.css";
 
@@ -139,6 +139,7 @@ export default function AuthReviewModal({ items, existing = [], expectedName = "
                   </div>
                 )}
 
+                {blocked && <div className="mae-freeze" role="alert"><b>⚠ {t("Warning", "Chetavni")}</b><span>{lang === "en" ? FREEZE_WARNING.en : FREEZE_WARNING.hi}</span></div>}
                 {blocked && (
                   <div className="mae-actions">
                     {mode === "upload" && onUseCamera && <button type="button" className="mae-primary" onClick={() => { onClose(); onUseCamera(); }}>📷 {t("Capture it live instead", "Iski jagah live capture karo")}</button>}
@@ -157,10 +158,12 @@ export default function AuthReviewModal({ items, existing = [], expectedName = "
                           <input type="date" value={decl.claimedTakenOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDecl((d) => ({ ...d, claimedTakenOn: e.target.value }))} /></label>
                       </div>
                     )}
-                    {stmts.map((s) => <label key={s.id} className="mae-check-row"><input type="checkbox" checked={!!decl.accepted[s.id]} onChange={() => toggle(s.id)} /><span>{lang === "en" ? s.en : s.hi}</span></label>)}
+                    <p className="mae-decl-text">{lang === "en" ? stmts[0].en : stmts[0].hi}</p>
+                    <div className="mae-freeze" role="alert"><b>⚠ {t("Warning", "Chetavni")}</b><span>{lang === "en" ? FREEZE_WARNING.en : FREEZE_WARNING.hi}</span></div>
+                    <label className="mae-check-row"><input type="checkbox" checked={!!decl.accepted.declaration} onChange={() => toggle("declaration")} /><span>{t("I have read this declaration and agree.", "Maine ye declaration padh li hai aur main sehmat hoon.")}</span></label>
                     <label className="mae-sign">{t("Type your full name to sign", "Sign karne ke liye apna poora naam likho")}
                       <input value={decl.signedName} onChange={(e) => setDecl((d) => ({ ...d, signedName: e.target.value }))} placeholder={expectedName && !/^your professional profile$/i.test(expectedName) ? expectedName : t("Full name", "Poora naam")} autoComplete="name" /></label>
-                    {decl.signedName.trim().length >= 3 && !complete && stmts.every((s) => decl.accepted[s.id]) && <small className="mae-warn">{t("The name should match your profile name.", "Naam aapke profile ke naam se milna chahiye.")}</small>}
+                    {decl.signedName.trim().length >= 3 && !complete && decl.accepted.declaration && <small className="mae-warn">{t("The name should match your profile name.", "Naam aapke profile ke naam se milna chahiye.")}</small>}
                     <small className="mae-record-note">{t(`PDP saves this as a signed record (declaration ${DECLARATION_VERSION}, date, time and screening result) that you can download later.`, `PDP ise signed record ki tarah save karta hai (declaration ${DECLARATION_VERSION}, tareekh, samay aur screening result) jo aap baad me download kar sakte ho.`)}</small>
                     {err && <div className="mae-error small">{err}</div>}
                     <div className="mae-actions">
