@@ -604,3 +604,7 @@ h1 em,h2 em{font-style:normal;color:var(--cyan)}
 
 /* Manual profile path for candidates without a resume */
 .resume-manual-choice{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:18px 0 24px;padding:15px 18px;border:1px solid rgba(80,190,230,.2);border-radius:12px;background:rgba(14,42,59,.45);color:#a8bece;font-size:13px}.resume-manual-choice button{border:1px solid rgba(46,204,245,.4);border-radius:9px;background:rgba(30,180,220,.1);color:#4bd7ff;padding:10px 14px;font-weight:800;cursor:pointer}.resume-manual-choice button:hover{background:rgba(30,180,220,.2)}
+
+/* Resume onboarding: account email is intentionally read-only once authenticated. */
+.pdp-locked-field { color: #8e98a8 !important; background: rgba(255,255,255,.035) !important; cursor: not-allowed; }
+.field-note { display:block; margin-top:6px; color:#778195; font-size:11px; }
