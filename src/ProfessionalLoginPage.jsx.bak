@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { saveProfile, setAuthToken } from "./pdpStorage";
+import { saveProfile } from "./pdpStorage";
 import { getDraft, saveDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
 import "./professionalLogin.css";
@@ -25,8 +25,7 @@ export default function ProfessionalLoginPage() {
 
   const showNotice = (message, type = "info") => { setNotice(message); setNoticeType(type); };
 
-  const continueToResume = async (accountEmail, authToken) => {
-    if (authToken) setAuthToken(authToken);
+  const continueToResume = async (accountEmail) => {
     const draft = saveDraft({ email: accountEmail });
     await saveProfile({ ...draft, email: accountEmail }).catch(() => null);
     window.location.assign("/upload-resume");
@@ -65,7 +64,7 @@ export default function ProfessionalLoginPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.authenticated !== true) throw new Error(data.message || "The code could not be verified. Please check it and try again.");
-      await continueToResume(email.trim().toLowerCase(), data.token);
+      await continueToResume(email.trim().toLowerCase());
     } catch (error) {
       showNotice(error.message || "Email verification failed.", "error");
     } finally { setBusy(false); }
@@ -91,7 +90,7 @@ export default function ProfessionalLoginPage() {
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok || data.authenticated !== true || !data.email) throw new Error(data.message || "Google sign-in could not be verified by PDP.");
-          await continueToResume(data.email, data.token);
+          await continueToResume(data.email);
         } catch (error) {
           showNotice(error.message || "Google sign-in failed.", "error");
         } finally { setBusy(false); }
