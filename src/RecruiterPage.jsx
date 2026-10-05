@@ -1,150 +1,128 @@
 import React, { useState } from "react";
 import pdpLogo from "./pdp-logo.png";
+import heroVisual from "./hero-bg.png";
+import proofDevice from "./proof-device.png";
+import recruiterWork from "./recruiter-work.png";
+import cityBg from "./city-bg.png";
 
-const RECRUITER_LOGIN = "/recruiters/login";
+const LOGIN = "/recruiters/login";
 
-const BENEFITS = [
-  ["01", "See proof, not just promises", "Go beyond a resume. Review relevant work photos, videos, projects and company-linked evidence before spending time on a call."],
-  ["02", "Search by real experience", "Describe the capability you need and discover professionals through the work they have actually documented — not only job titles and keywords."],
-  ["03", "Cut screening time", "A recruiter can understand role, tenure, skills, proof and credibility from one structured PDP instead of opening multiple documents and links."],
-  ["04", "Reach the right person faster", "Shortlist profiles, save them for later and connect through WhatsApp when a candidate looks relevant."],
+const proofItems = [
+  ["▣", "Visual Proof", "Videos, photos, projects, presentations and real work evidence."],
+  ["♙", "Relevant Experience", "Find talent with specific skills, roles and industry experience."],
+  ["✓", "Trusted Information", "Work history connected to companies and real-world evidence."],
+  ["◉", "Smarter Hiring", "Make faster, more confident decisions with complete context."],
 ];
 
-const DIFFERENT = [
-  ["Resume", "What a professional says they have done"],
-  ["PDP", "What they say + where they worked + visual proof of the work"],
-  ["Recruiter outcome", "Less guesswork, faster screening and better-quality conversations"],
+const benefits = [
+  ["ϟ", "Screen Faster", "See real skills and work upfront."],
+  ["▣", "Compare Easily", "Visual format makes evaluation simple."],
+  ["♙", "Reduce Interview Rounds", "Pre-qualify with real evidence."],
+  ["◎", "Improve Quality of Hire", "Better fit, lower attrition."],
 ];
 
-const WORKFLOW = [
-  ["01", "Define", "Tell PDP what kind of professional or capability you need."],
-  ["02", "Discover", "PDP surfaces relevant professional profiles and experience signals."],
-  ["03", "Verify visually", "Open the PDP and inspect company-linked photos, videos, projects and reviews."],
-  ["04", "Shortlist", "Save the profiles worth progressing — without losing them in a spreadsheet."],
-  ["05", "Connect", "Reach the professional through the available contact channel, including WhatsApp."],
+const workflow = [
+  ["01", "Set Your Requirement", "Search by skills, experience, location, industry or capability."],
+  ["02", "Discover Talent", "Explore verified profiles with relevant media & proof."],
+  ["03", "Review & Evaluate", "Watch videos, check experience, read reviews and more."],
+  ["04", "Shortlist & Connect", "Reach out via WhatsApp directly from the profile."],
 ];
 
 export default function RecruiterPage() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState("");
 
   const openLogin = (e) => {
-    if (e) e.preventDefault();
-    setSubmitted(false);
+    e?.preventDefault();
+    setMessage("");
     setLoginOpen(true);
   };
 
-  const submitLogin = (e) => {
+  const submit = (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setSubmitted(true);
+    setMessage("Your recruiter login flow is ready. Email verification will be connected to the recruiter account backend.");
   };
 
   return (
-    <div className="recruiter-page recruiter-landing">
-      <header className="recruiter-topbar recruiter-marketing-bar">
-        <a className="recruiter-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
+    <div className="rp-page">
+      <header className="rp-nav">
+        <a href="/" className="rp-brand"><img src={pdpLogo} alt="mypdp.in" /></a>
         <nav>
-          <a className="active" href="#why-pdp">Why PDP</a>
-          <a href="#how-it-works">How It Works</a>
-          <a href="#recruiter-benefits">Benefits</a>
-          <a href="#trust">Trust & Proof</a>
+          <a href="/">Home</a>
+          <a href="/professionals">For Professionals</a>
+          <a className="active" href="/recruiters">For Recruiters</a>
+          <a href="#why">About</a>
+          <a href="#cta">Pricing</a>
         </nav>
-        <div className="recruiter-auth-actions">
-          <a className="recruiter-login-link" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login</a>
-          <a className="recruiter-primary-small" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Access</a>
+        <div className="rp-nav-right">
+          <div className="rp-search">⌕ <span>Search by name, skills, location...</span></div>
+          <a href={LOGIN} className="rp-login-outline" onClick={openLogin}>Recruiter Login</a>
+          <button className="rp-access" onClick={() => document.getElementById("cta")?.scrollIntoView({behavior:"smooth"})}>Get Recruiter Access</button>
         </div>
       </header>
 
       <main>
-        <section className="recruiter-landing-hero" id="why-pdp">
-          <div className="recruiter-hero-copy">
-            <div className="recruiter-eyebrow">PDP FOR RECRUITERS</div>
-            <h1>Hire with <em>more confidence.</em><br />Spend less time screening.</h1>
-            <p className="recruiter-hero-lead">PDP gives recruiters a candidate-first professional profile where experience is connected to visual proof — so you can understand a person before the interview, not after it.</p>
-            <div className="recruiter-hero-actions">
-              <a className="recruiter-primary-btn" href={RECRUITER_LOGIN} onClick={openLogin}>Login to Recruiter Account <span>→</span></a>
-              <a className="recruiter-secondary-btn" href="#how-it-works">See how PDP works <span>↓</span></a>
+        <section className="rp-hero">
+          <div className="rp-hero-copy">
+            <div className="rp-kicker">HIRE SMARTER. FASTER. BETTER.</div>
+            <h1>See Real Talent.<br /><span>Not Just Resumes.</span></h1>
+            <p>PDP gives you visual access to a candidate's actual work, skills and experience — so you can hire with confidence, reduce hiring risk and get better results.</p>
+            <div className="rp-actions">
+              <a href={LOGIN} className="rp-primary" onClick={openLogin}>♙ &nbsp; Login as Recruiter</a>
+              <a href="#how" className="rp-secondary">▷ &nbsp; Learn More</a>
             </div>
-            <div className="recruiter-trust-line"><span>✓ Candidate-first</span><span>✓ Visual proof of work</span><span>✓ Built for faster screening</span></div>
           </div>
-          <div className="recruiter-hero-visual" aria-label="PDP recruiter experience preview">
-            <div className="recruiter-glow" />
-            <div className="recruiter-screen recruiter-screen-main">
-              <div className="screen-top"><span className="screen-dot" /><span>Candidate PDP</span><b>87 PDP Score</b></div>
-              <div className="screen-profile">
-                <div className="screen-avatar">RS</div>
-                <div><strong>Senior Sales Professional</strong><small>8+ years · Distributor Management · BTL · New Markets</small></div>
-                <span className="screen-verified">✓ Verified</span>
-              </div>
-              <div className="screen-proof-grid">
-                <div><b>Work Proof</b><span>6 videos · 18 photos</span></div>
-                <div><b>Experience</b><span>3 companies · 8+ years</span></div>
-                <div><b>Reviews</b><span>4.8 ★ · 12 reviews</span></div>
-              </div>
-              <div className="screen-media-row"><span>▶ Project video</span><span>▣ Company proof</span><span>▣ Field activity</span></div>
+          <div className="rp-hero-art">
+            <img src={heroVisual} alt="Recruiter reviewing a PDP profile" />
+          </div>
+        </section>
+
+        <section className="rp-section rp-difference" id="why">
+          <div className="rp-heading narrow">
+            <div className="rp-pill">WHY PDP IS DIFFERENT</div>
+            <h2>More than a Resume.<br />It's <span>Real Proof.</span></h2>
+            <p>While a resume tells you what a candidate says, PDP shows you what they've actually done.</p>
+          </div>
+          <div className="rp-proof-row">
+            <div className="rp-compare">
+              <div className="rp-compare-col"><h3>Traditional Resume</h3><p>✕ Self-declared information</p><p>✕ No proof of work</p><p>✕ Hard to verify</p><p>✕ High risk of exaggeration</p></div>
+              <div className="rp-compare-col rp-highlight"><h3>PDP Profile</h3><p>✓ Verified work experience</p><p>✓ Videos, photos & projects</p><p>✓ Real company evidence</p><p>✓ Greater trust & transparency</p></div>
             </div>
-            <div className="recruiter-float recruiter-float-match"><small>RELEVANT EXPERIENCE</small><strong>Distributor Management · 5 yrs</strong><span>Evidence available</span></div>
-            <div className="recruiter-float recruiter-float-time"><b>Less screening noise</b><span>One profile → experience → proof</span></div>
+            <div className="rp-device"><img src={proofDevice} alt="PDP candidate profile with proof" /></div>
+            <div className="rp-proof-list">{proofItems.map(([icon,title,text]) => <div className="rp-proof-item" key={title}><i>{icon}</i><div><h3>{title}</h3><p>{text}</p></div></div>)}</div>
           </div>
         </section>
 
-        <section className="recruiter-section recruiter-difference" id="recruiter-benefits">
-          <div className="recruiter-section-heading"><div className="section-kicker">WHY PDP IS DIFFERENT</div><h2>A resume tells you what happened.<br /><em>PDP helps you see the evidence.</em></h2><p>The recruiter experience is designed around one question: <strong>“Can I trust what I am seeing enough to move this candidate forward?”</strong></p></div>
-          <div className="recruiter-difference-grid">
-            {DIFFERENT.map(([title, text], i) => <div className={`difference-card ${i === 1 ? "featured" : ""}`} key={title}><span>0{i + 1}</span><h3>{title}</h3><p>{text}</p></div>)}
-          </div>
+        <section className="rp-section rp-results">
+          <div className="rp-work-image"><img src={recruiterWork} alt="Recruiter evaluating talent" /></div>
+          <div className="rp-results-copy"><div className="rp-pill">SAVE TIME. GET BETTER OUTPUT.</div><h2>Built for Recruiters.<br /><span>Designed for Results.</span></h2><p>PDP helps you cut through the noise, so you can focus on what matters — finding the right talent.</p></div>
+          <div className="rp-benefits">{benefits.map(([icon,title,text]) => <div key={title}><i>{icon}</i><h3>{title}</h3><p>{text}</p></div>)}</div>
         </section>
 
-        <section className="recruiter-section" id="trust">
-          <div className="recruiter-section-heading centered"><div className="section-kicker">WHAT YOU GET</div><h2>Less searching. More understanding.</h2><p>PDP brings the most useful recruiter signals together before you spend time interviewing.</p></div>
-          <div className="recruiter-benefit-grid">
-            {BENEFITS.map(([num, title, text]) => <article className="recruiter-benefit-card" key={num}><b>{num}</b><div><h3>{title}</h3><p>{text}</p></div></article>)}
-          </div>
+        <section className="rp-section rp-how" id="how">
+          <div className="rp-pill">HOW IT WORKS</div>
+          <h2>From Discovery to Shortlist —<br />In Just a Few Steps</h2>
+          <div className="rp-workflow">{workflow.map(([num,title,text],i) => <React.Fragment key={num}><div className="rp-step"><div className="rp-step-icon">{["⌕","♙","◉","☆"][i]}</div><b>{num}</b><h3>{title}</h3><p>{text}</p></div>{i<workflow.length-1 && <div className="rp-arrow">→</div>}</React.Fragment>)}</div>
         </section>
 
-        <section className="recruiter-section recruiter-workflow" id="how-it-works">
-          <div className="recruiter-section-heading"><div className="section-kicker">HOW A RECRUITER USES PDP</div><h2>Requirement → Talent → Proof → Decision</h2><p>No need to upload a job opening on this page. This space is about helping recruiters discover and evaluate talent.</p></div>
-          <div className="recruiter-workflow-grid">
-            {WORKFLOW.map(([num, title, text]) => <div className="workflow-card" key={num}><span>{num}</span><h3>{title}</h3><p>{text}</p></div>)}
-          </div>
+        <section className="rp-section rp-loved">
+          <div><div className="rp-pill">WHAT RECRUITERS LOVE</div><h2>Real Talent. <span>Real Impact.</span></h2><p>Join leading companies already hiring on PDP with a smarter approach to recruitment.</p></div>
+          <div className="rp-stats"><div><strong>10K+</strong><span>Verified Candidates</span></div><div><strong>500+</strong><span>Hiring Companies</span></div><div><strong>70%</strong><span>Faster Screening</span></div><div><strong>Higher</strong><span>Quality Hires</span></div></div>
+          <div className="rp-quote">“PDP has completely changed the way we hire. We get to see real work, not just claims. It saves us hours and helps us make much better decisions.”<b>— HR Manager</b><small>Leading FMCG Company</small></div>
         </section>
 
-        <section className="recruiter-section recruiter-use-cases">
-          <div className="recruiter-use-panel">
-            <div><div className="section-kicker">USE PDP FOR REAL RECRUITING WORK</div><h2>Especially useful when a CV is not enough.</h2><p>For sales, operations, field roles, marketing, technical work, design, service and other roles where the difference is often in <strong>what the person has actually handled</strong>.</p></div>
-            <div className="use-tags"><span>Distributor handling</span><span>BTL / Activations</span><span>Product launches</span><span>New market development</span><span>Client handling</span><span>Project work</span><span>Field execution</span><span>UX / Research</span></div>
-          </div>
-        </section>
-
-        <section className="recruiter-section recruiter-cta">
-          <div><div className="section-kicker">READY TO RECRUIT DIFFERENTLY?</div><h2>Start with a recruiter account.</h2><p>Login to discover PDP professionals, review their evidence and build your shortlist.</p></div>
-          <a className="recruiter-primary-btn" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login <span>→</span></a>
+        <section className="rp-cta" id="cta" style={{backgroundImage:`linear-gradient(rgba(2,12,22,.22),rgba(2,12,22,.76)), url(${cityBg})`}}>
+          <h2>Ready to hire better?</h2><p>Join thousands of recruiters who trust PDP for verified, visual and authentic talent.</p>
+          <div className="rp-actions"><a href={LOGIN} className="rp-primary" onClick={openLogin}>♙ &nbsp; Login as Recruiter</a><a href={LOGIN} className="rp-secondary" onClick={openLogin}>♙ &nbsp; Get Recruiter Access</a></div>
+          <small>Questions? &nbsp;<a href="mailto:support@mypdp.in">Contact us</a> &nbsp; | &nbsp; support@mypdp.in</small>
         </section>
       </main>
-      <footer className="recruiter-footer"><span>mypdp.in</span><span>Trust · Transparency · Real Talent</span><a href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login</a></footer>
 
-      {loginOpen && (
-        <div className="recruiter-login-overlay" role="dialog" aria-modal="true" aria-labelledby="recruiter-login-title" onMouseDown={(e) => { if (e.target === e.currentTarget) setLoginOpen(false); }}>
-          <section className="recruiter-inline-login">
-            <button className="recruiter-login-close" type="button" aria-label="Close login" onClick={() => setLoginOpen(false)}>×</button>
-            <div className="section-kicker">RECRUITER ACCOUNT</div>
-            <h2 id="recruiter-login-title">Welcome back.</h2>
-            <p>Login to discover PDP professionals, review proof and build your shortlist.</p>
-            <button type="button" className="google-login-btn" onClick={() => setSubmitted(true)}><span className="google-g">G</span> Continue with Google</button>
-            <div className="login-divider"><span>or continue with email</span></div>
-            <form onSubmit={submitLogin}>
-              <label>WORK EMAIL</label>
-              <input type="email" value={email} onChange={e => { setEmail(e.target.value); setSubmitted(false); }} placeholder="name@company.com" autoComplete="email" autoFocus />
-              <button className="login-submit" type="submit">Continue <span>→</span></button>
-            </form>
-            {submitted && <div className="login-message">Your recruiter login flow is ready. Email/Google verification will be connected to the recruiter account backend.</div>}
-            <p className="login-note">Authorised hiring professionals and organisations only.</p>
-            <a className="inline-full-login" href={RECRUITER_LOGIN}>Open full recruiter login page →</a>
-          </section>
-        </div>
-      )}
+      <footer className="rp-footer"><div className="rp-footer-brand"><img src={pdpLogo} alt="mypdp.in" /><span>Your Performance Display Platform</span></div><div className="rp-footer-links"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/recruiters">For Recruiters</a><a href="#why">About</a><a href="#cta">Contact</a></div><div className="rp-social">in &nbsp; ▶ &nbsp; 𝕏</div></footer>
+
+      {loginOpen && <div className="rp-overlay" onMouseDown={e => e.target===e.currentTarget && setLoginOpen(false)}><div className="rp-login-modal"><button className="rp-close" onClick={()=>setLoginOpen(false)}>×</button><div className="rp-pill">RECRUITER ACCOUNT</div><h2>Welcome back.</h2><p>Login to discover PDP professionals, review proof and build your shortlist.</p><button className="rp-google" onClick={()=>setMessage("Google login will connect to the recruiter account backend.")}><b>G</b> Continue with Google</button><div className="rp-or"><span>or continue with email</span></div><form onSubmit={submit}><label>WORK EMAIL</label><input type="email" required value={email} onChange={e=>{setEmail(e.target.value);setMessage("")}} placeholder="name@company.com"/><button className="rp-primary full">Continue →</button></form>{message && <div className="rp-message">{message}</div>}<a className="rp-full-login" href={LOGIN}>Open full recruiter login page →</a></div></div>}
     </div>
   );
 }

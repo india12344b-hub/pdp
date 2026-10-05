@@ -12,6 +12,7 @@ import PdpPal from "./PdpPal";
 import "./styles.css";
 import "./professionals.css";
 import "./pdpProfile.css";
+import "./recruiterLanding.css";
 
 // Browser-tab icon: use only the PDP shield for a clean favicon at small sizes.
 const favicon = document.querySelector('link[rel="icon"]') || document.createElement("link");
