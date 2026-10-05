@@ -1,101 +1,113 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { getDraft } from "./pdpDraft";
-import { getMedia, getIntro } from "./pdpStorage";
-import { getRoleProfile, buildShortlistTools } from "./pdpProfileData";
+import React from "react";
 import pdpLogo from "./pdp-logo.png";
 
-const ALIASES = {
-  "distributor management": ["distributor", "distribution", "channel"],
-  "btl / trade activation": ["btl", "trade activation", "activation"],
-  "product launch": ["product launch", "launch", "new product"],
-  "new market development": ["new market", "market expansion", "territory"],
-  "channel development": ["channel", "distribution", "distributor"],
-  "key accounts": ["key account", "strategic account", "enterprise"],
-  "ux / research": ["ux", "research", "usability", "discovery"],
-  "cross-functional leadership": ["cross-functional", "leadership", "team"],
-};
+const RECRUITER_LOGIN = "/recruiters/login";
 
-function requirementFilters(text, areas) {
-  const q = text.toLowerCase();
-  return areas.filter(label => (ALIASES[label.toLowerCase()] || [label.toLowerCase()]).some(term => q.includes(term)));
-}
+const BENEFITS = [
+  ["01", "See proof, not just promises", "Go beyond a resume. Review relevant work photos, videos, projects and company-linked evidence before spending time on a call."],
+  ["02", "Search by real experience", "Describe the capability you need and discover professionals through the work they have actually documented — not only job titles and keywords."],
+  ["03", "Cut screening time", "A recruiter can understand role, tenure, skills, proof and credibility from one structured PDP instead of opening multiple documents and links."],
+  ["04", "Reach the right person faster", "Shortlist profiles, save them for later and connect through WhatsApp when a candidate looks relevant."],
+];
+
+const DIFFERENT = [
+  ["Resume", "What a professional says they have done"],
+  ["PDP", "What they say + where they worked + visual proof of the work"],
+  ["Recruiter outcome", "Less guesswork, faster screening and better-quality conversations"],
+];
+
+const WORKFLOW = [
+  ["01", "Define", "Tell PDP what kind of professional or capability you need."],
+  ["02", "Discover", "PDP surfaces relevant professional profiles and experience signals."],
+  ["03", "Verify visually", "Open the PDP and inspect company-linked photos, videos, projects and reviews."],
+  ["04", "Shortlist", "Save the profiles worth progressing — without losing them in a spreadsheet."],
+  ["05", "Connect", "Reach the professional through the available contact channel, including WhatsApp."],
+];
 
 export default function RecruiterPage() {
-  const [draft, setDraft] = useState(getDraft());
-  const [proof, setProof] = useState([]);
-  const [hasIntro, setHasIntro] = useState(false);
-  const [requirement, setRequirement] = useState("");
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [searchSubmitted, setSearchSubmitted] = useState(false);
-  const [shortlisted, setShortlisted] = useState(false);
-
-  useEffect(() => {
-    Promise.all([getMedia(), getIntro()]).then(([media, intro]) => { setProof(media || []); setHasIntro(!!intro); }).catch(() => {});
-  }, []);
-
-  const profile = useMemo(() => ({ ...draft }), [draft]);
-  const roleProfile = useMemo(() => getRoleProfile(profile), [profile.role, profile.skills?.join(","), profile.about]);
-  const areas = useMemo(() => buildShortlistTools(profile, roleProfile, profile.experience || []), [profile, roleProfile]);
-  const suggestedFilters = useMemo(() => requirementFilters(requirement, areas), [requirement, areas]);
-  const filters = searchSubmitted ? (activeFilters.length ? activeFilters : suggestedFilters) : [];
-  const haystack = [profile.name, profile.role, profile.location, profile.about, ...(profile.skills || []), ...(profile.experience || []).flatMap(x => [x.company, x.role, x.desc, x.highlight, ...(x.tags || [])])].filter(Boolean).join(" ").toLowerCase();
-  const matched = filters.filter(f => (ALIASES[f.toLowerCase()] || [f.toLowerCase()]).some(t => haystack.includes(t)));
-  const profileReady = Boolean(profile.name && profile.role);
-
-  const toggleFilter = filter => { setSearchSubmitted(true); setActiveFilters(current => current.includes(filter) ? current.filter(x => x !== filter) : [...current, filter]); };
-  const runSearch = () => {
-    if (!requirement.trim()) return;
-    setActiveFilters(suggestedFilters);
-    setSearchSubmitted(true);
-    window.requestAnimationFrame(() => document.getElementById("requirement-results")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  };
-
-  const applySearch = (text) => {
-    setRequirement(text);
-    setActiveFilters(requirementFilters(text, areas));
-    setSearchSubmitted(true);
-  };
-  useEffect(() => {
-    const onPalSearch = (e) => { if (e.detail?.text) applySearch(e.detail.text); };
-    const onPalShortlist = () => setShortlisted(true);
-    window.addEventListener("pdp-pal:search", onPalSearch);
-    window.addEventListener("pdp-pal:shortlist", onPalShortlist);
-    return () => { window.removeEventListener("pdp-pal:search", onPalSearch); window.removeEventListener("pdp-pal:shortlist", onPalShortlist); };
-  }, [areas]);
-
-  return <div className="recruiter-page">
-    <header className="recruiter-topbar">
-      <a className="recruiter-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
-      <nav><a href="/">Home</a><a href="/professionals">Professionals</a><a className="active" href="/recruiters">Discover Talent</a><a href="#shortlist">Shortlist</a></nav>
-      <a className="recruiter-back" href="/">← PDP Home</a>
-    </header>
-
-    <main className="recruiter-shell" id="discover">
-      <section className="recruiter-hero">
-        <div className="recruiter-eyebrow">PDP FOR RECRUITERS</div>
-        <h1>Find relevant experience.<br /><em>Then see the proof.</em></h1>
-        <p>Describe the professional you need. PDP turns the requirement into relevant experience areas and surfaces live PDP profiles.</p>
-        <div className="requirement-box">
-          <label htmlFor="job-requirement">JOB REQUIREMENT</label>
-          <textarea id="job-requirement" value={requirement} onChange={e => { setRequirement(e.target.value); setSearchSubmitted(false); setActiveFilters([]); }} placeholder="Paste a job description or describe what you are looking for…" />
-          <div className="requirement-actions"><span>Live profile data only — no fabricated candidates.</span><div className="requirement-action-group">{areas.length > 0 && <button type="button" onClick={() => { setRequirement(areas.slice(0, 4).join(", ")); setSearchSubmitted(false); setActiveFilters([]); }}>Use profile experience →</button>}<button type="button" className="requirement-search-btn" onClick={runSearch} disabled={!requirement.trim()}>Search <span aria-hidden="true">→</span></button></div></div>
+  return (
+    <div className="recruiter-page recruiter-landing">
+      <header className="recruiter-topbar recruiter-marketing-bar">
+        <a className="recruiter-brand" href="/"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></a>
+        <nav>
+          <a className="active" href="#why-pdp">Why PDP</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#recruiter-benefits">Benefits</a>
+          <a href="#trust">Trust & Proof</a>
+        </nav>
+        <div className="recruiter-auth-actions">
+          <a className="recruiter-login-link" href={RECRUITER_LOGIN}>Recruiter Login</a>
+          <a className="recruiter-primary-small" href={RECRUITER_LOGIN}>Get Recruiter Access</a>
         </div>
-        {searchSubmitted && (suggestedFilters.length > 0 || activeFilters.length > 0) && <section className="requirement-results" id="requirement-results"><div className="section-kicker">RELEVANT EXPERIENCE</div><h2>What matters in this requirement</h2><p>These filters connect the requirement to documented candidate experience.</p><div className="filter-row">{suggestedFilters.map(filter => <button key={filter} className={filters.includes(filter) ? "selected" : ""} onClick={() => toggleFilter(filter)}>{filter}<span>{filters.includes(filter) ? "✓" : "+"}</span></button>)}</div></section>}
-      </section>
+      </header>
 
-      <section className="candidate-section" id="shortlist">
-        <div className="candidate-head"><div><div className="section-kicker">DISCOVER TALENT</div><h2>{profileReady ? "Live PDP profile" : "No live candidate profile yet"}</h2></div><span>{profileReady ? "1 live profile" : "0 profiles"}</span></div>
-        {profileReady ? <article className="candidate-card">
-          <div className="candidate-card-top"><div className="candidate-avatar">{(profile.name || "PDP").trim().split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0,2).toUpperCase()}</div><div><h3>{profile.name}</h3><p>{profile.role}</p></div><span className="evidence-badge">● {proof.length + (hasIntro ? 1 : 0)} proof items</span></div>
-          <div className="candidate-meta"><span>⌖ {profile.location || "Location not added"}</span><span>◷ {profile.stats?.experience || "Experience not added"}</span><span>{roleProfile.category}</span></div>
-          <div className="match-label">MATCHED EXPERIENCE</div>
-          <div className="candidate-tags">{(matched.length ? matched : areas.slice(0, 6)).map(tag => <span key={tag}>{tag}</span>)}</div>
-          <div className="proof-row">{hasIntro && <span>✓ Career introduction</span>}{proof.filter(x => x.type === "image").length > 0 && <span>✓ {proof.filter(x => x.type === "image").length} photos</span>}{proof.filter(x => x.type === "video").length > 0 && <span>✓ {proof.filter(x => x.type === "video").length} videos</span>}</div>
-          <div className="candidate-actions"><a className="view-pdp" href="/pdp/me?view=recruiter">View PDP →</a><button className={shortlisted ? "shortlisted" : ""} onClick={() => setShortlisted(x => !x)}>{shortlisted ? "✓ Shortlisted" : "+ Add to Shortlist"}</button></div>
-        </article> : <div className="empty-state">No candidate profile has been created yet. Start with <a href="/upload-resume">Upload Resume</a> and build the real PDP.</div>}
-      </section>
+      <main>
+        <section className="recruiter-landing-hero" id="why-pdp">
+          <div className="recruiter-hero-copy">
+            <div className="recruiter-eyebrow">PDP FOR RECRUITERS</div>
+            <h1>Hire with <em>more confidence.</em><br />Spend less time screening.</h1>
+            <p className="recruiter-hero-lead">PDP gives recruiters a candidate-first professional profile where experience is connected to visual proof — so you can understand a person before the interview, not after it.</p>
+            <div className="recruiter-hero-actions">
+              <a className="recruiter-primary-btn" href={RECRUITER_LOGIN}>Login to Recruiter Account <span>→</span></a>
+              <a className="recruiter-secondary-btn" href="#how-it-works">See how PDP works <span>↓</span></a>
+            </div>
+            <div className="recruiter-trust-line"><span>✓ Candidate-first</span><span>✓ Visual proof of work</span><span>✓ Built for faster screening</span></div>
+          </div>
+          <div className="recruiter-hero-visual" aria-label="PDP recruiter experience preview">
+            <div className="recruiter-glow" />
+            <div className="recruiter-screen recruiter-screen-main">
+              <div className="screen-top"><span className="screen-dot" /><span>Candidate PDP</span><b>87 PDP Score</b></div>
+              <div className="screen-profile">
+                <div className="screen-avatar">RS</div>
+                <div><strong>Senior Sales Professional</strong><small>8+ years · Distributor Management · BTL · New Markets</small></div>
+                <span className="screen-verified">✓ Verified</span>
+              </div>
+              <div className="screen-proof-grid">
+                <div><b>Work Proof</b><span>6 videos · 18 photos</span></div>
+                <div><b>Experience</b><span>3 companies · 8+ years</span></div>
+                <div><b>Reviews</b><span>4.8 ★ · 12 reviews</span></div>
+              </div>
+              <div className="screen-media-row"><span>▶ Project video</span><span>▣ Company proof</span><span>▣ Field activity</span></div>
+            </div>
+            <div className="recruiter-float recruiter-float-match"><small>RELEVANT EXPERIENCE</small><strong>Distributor Management · 5 yrs</strong><span>Evidence available</span></div>
+            <div className="recruiter-float recruiter-float-time"><b>Less screening noise</b><span>One profile → experience → proof</span></div>
+          </div>
+        </section>
 
-      <section className="recruiter-flow" id="how"><div><div className="section-kicker">THE PDP RECRUITER FLOW</div><h2>Requirement → Experience → Proof → Contact</h2></div><div className="flow-cards"><div><b>01</b><strong>Describe the need</strong><span>Paste a JD or define the role.</span></div><div><b>02</b><strong>Find relevant experience</strong><span>Use documented role and industry evidence.</span></div><div><b>03</b><strong>Open the PDP</strong><span>Review real projects, videos and photos.</span></div><div><b>04</b><strong>Shortlist & connect</strong><span>Save or contact the professional.</span></div></div></section>
-    </main>
-  </div>;
+        <section className="recruiter-section recruiter-difference" id="recruiter-benefits">
+          <div className="recruiter-section-heading"><div className="section-kicker">WHY PDP IS DIFFERENT</div><h2>A resume tells you what happened.<br /><em>PDP helps you see the evidence.</em></h2><p>The recruiter experience is designed around one question: <strong>“Can I trust what I am seeing enough to move this candidate forward?”</strong></p></div>
+          <div className="recruiter-difference-grid">
+            {DIFFERENT.map(([title, text], i) => <div className={`difference-card ${i === 1 ? "featured" : ""}`} key={title}><span>0{i + 1}</span><h3>{title}</h3><p>{text}</p></div>)}
+          </div>
+        </section>
+
+        <section className="recruiter-section" id="trust">
+          <div className="recruiter-section-heading centered"><div className="section-kicker">WHAT YOU GET</div><h2>Less searching. More understanding.</h2><p>PDP brings the most useful recruiter signals together before you spend time interviewing.</p></div>
+          <div className="recruiter-benefit-grid">
+            {BENEFITS.map(([num, title, text]) => <article className="recruiter-benefit-card" key={num}><b>{num}</b><div><h3>{title}</h3><p>{text}</p></div></article>)}
+          </div>
+        </section>
+
+        <section className="recruiter-section recruiter-workflow" id="how-it-works">
+          <div className="recruiter-section-heading"><div className="section-kicker">HOW A RECRUITER USES PDP</div><h2>Requirement → Talent → Proof → Decision</h2><p>No need to upload a job opening on this page. This space is about helping recruiters discover and evaluate talent.</p></div>
+          <div className="recruiter-workflow-grid">
+            {WORKFLOW.map(([num, title, text]) => <div className="workflow-card" key={num}><span>{num}</span><h3>{title}</h3><p>{text}</p></div>)}
+          </div>
+        </section>
+
+        <section className="recruiter-section recruiter-use-cases">
+          <div className="recruiter-use-panel">
+            <div><div className="section-kicker">USE PDP FOR REAL RECRUITING WORK</div><h2>Especially useful when a CV is not enough.</h2><p>For sales, operations, field roles, marketing, technical work, design, service and other roles where the difference is often in <strong>what the person has actually handled</strong>.</p></div>
+            <div className="use-tags"><span>Distributor handling</span><span>BTL / Activations</span><span>Product launches</span><span>New market development</span><span>Client handling</span><span>Project work</span><span>Field execution</span><span>UX / Research</span></div>
+          </div>
+        </section>
+
+        <section className="recruiter-section recruiter-cta">
+          <div><div className="section-kicker">READY TO RECRUIT DIFFERENTLY?</div><h2>Start with a recruiter account.</h2><p>Login to discover PDP professionals, review their evidence and build your shortlist.</p></div>
+          <a className="recruiter-primary-btn" href={RECRUITER_LOGIN}>Recruiter Login <span>→</span></a>
+        </section>
+      </main>
+      <footer className="recruiter-footer"><span>mypdp.in</span><span>Trust · Transparency · Real Talent</span><a href={RECRUITER_LOGIN}>Recruiter Login</a></footer>
+    </div>
+  );
 }

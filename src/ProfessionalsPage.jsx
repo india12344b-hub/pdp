@@ -67,7 +67,7 @@ export default function Page2() {
             Transform your static resume into an interactive, proof-backed digital portfolio designed for modern professionals and recruiters.
           </p>
           <div className="pd2-actions">
-            <a href="/professional-login" className="pd2-btn primary">Create Your PDP</a>
+            <a href="#create" className="pd2-btn primary">Create Your PDP</a>
             <a href="#demo" className="pd2-btn outline">View Live Demo</a>
           </div>
           <div className="pd2-trust">
@@ -311,7 +311,7 @@ export default function Page2() {
         <div>
           <p>Ready to upgrade your professional presence?</p>
           <h2>Build Your Professional Profile Today</h2>
-          <a href="/professional-login" className="pd2-btn primary">Create Profile Now</a>
+          <a href="/upload-resume" className="pd2-btn primary">Create Profile Now</a>
           <a href="#learn-more" className="pd2-btn outline">Learn More</a>
         </div>
       </section>

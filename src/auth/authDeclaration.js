@@ -1,30 +1,24 @@
 /*
-  Originality declaration + consent record — one short paragraph, one tick, one signature.
-  The canonical (English) wording is what gets stored in the record, with its version, so a record always shows exactly
-  what the professional agreed to. The Hinglish text is a display aid only.
+  Originality declaration + consent record.
+  The canonical (English) wording below is what gets stored in the record, together with its version, so a record
+  always shows exactly what the professional agreed to. Hinglish text is a display aid only.
+  Uploads need the full declaration. Live PDP-camera captures only need the real-work + rights/consent statements
+  (the camera itself already shows it is not an edited or pre-made file).
 */
-export const DECLARATION_VERSION = "2026-10-v2";
+export const DECLARATION_VERSION = "2026-10-v1";
 
-export const FREEZE_WARNING = {
-  en: "If AI-generated, edited or wrongly declared media is found, your PDP account will be frozen.",
-  hi: "Agar AI-generated, edited ya galat declare kiya hua media mila, to aapka PDP account freeze kar diya jayega.",
-};
+export const STATEMENTS = [
+  { id: "real-work", modes: ["upload", "live"], en: "This is real work I did, or a real moment I was part of.", hi: "Ye asli kaam hai jo maine kiya, ya ek asli moment jisme main shamil tha/thi." },
+  { id: "not-ai", modes: ["upload"], en: "It was not created or substantially changed by AI.", hi: "Ye AI se nahi banaya gaya, na hi AI se bada badlav kiya gaya." },
+  { id: "not-edited", modes: ["upload"], en: "It has not been edited to change what it shows. (Crop, brightness, trimming or compression is fine.)", hi: "Ise is tarah edit nahi kiya gaya ki wo kuch aur dikhaye. (Crop, brightness, trimming ya compression theek hai.)" },
+  { id: "not-screen", modes: ["upload"], en: "It is not a photo of a screen, a printout, or someone else's work.", hi: "Ye kisi screen, printout ya kisi aur ke kaam ki photo nahi hai." },
+  { id: "rights-consent", modes: ["upload", "live"], en: "I have the right to share it, and anyone clearly shown has agreed or cannot be identified.", hi: "Mujhe ise share karne ka haq hai, aur jo log saaf dikhte hain unki sehmati hai ya wo pehchane nahi ja sakte." },
+  { id: "screening-consent", modes: ["upload", "live"], en: "I understand PDP screens uploads, may review them, and may remove proof that breaks these rules. PDP keeps this signed record.", hi: "Mujhe pata hai PDP uploads screen karta hai, review kar sakta hai, aur rules todne wala proof hata sakta hai. PDP ye signed record rakhta hai." },
+];
 
-const TEXT = {
-  upload: {
-    en: "I declare that this photo or video is real, unedited work that I created or have the right to share. It is not AI-generated or AI-altered, and it is not a photo of a screen, a printout or someone else's work. Anyone clearly shown has agreed or cannot be identified. I agree that PDP may screen and review it and keep this signed record.",
-    hi: "Main ghoshit karta/karti hoon ki ye photo ya video asli, bina edit kiya hua kaam hai jo maine banaya ya jise share karne ka mujhe haq hai. Ye AI se nahi bana na AI se badla gaya, aur ye kisi screen, printout ya kisi aur ke kaam ki photo nahi hai. Jo log saaf dikhte hain unki sehmati hai ya wo pehchane nahi ja sakte. Main manta/manti hoon ki PDP ise screen aur review kar sakta hai aur ye signed record rakhta hai.",
-  },
-  live: {
-    en: "I declare that I captured this myself, live, and that it shows real work or a real moment I was part of. I have the right to share it, and anyone clearly shown has agreed or cannot be identified. I agree that PDP may review it and keep this signed record.",
-    hi: "Main ghoshit karta/karti hoon ki ye maine khud, live capture kiya hai aur ye asli kaam ya asli moment dikhata hai. Mujhe ise share karne ka haq hai, aur jo log saaf dikhte hain unki sehmati hai ya wo pehchane nahi ja sakte. Main manta/manti hoon ki PDP ise review kar sakta hai aur ye signed record rakhta hai.",
-  },
-};
+export const statementsFor = (mode) => STATEMENTS.filter((s) => s.modes.includes(mode === "live" ? "live" : "upload"));
 
-export const statementsFor = (mode) => { const t = TEXT[mode === "live" ? "live" : "upload"]; return [{ id: "declaration", en: t.en, hi: t.hi }]; };
-export const STATEMENTS = statementsFor("upload");
-
-export const emptyDeclaration = () => ({ accepted: { declaration: false }, signedName: "", origin: "own", claimedTakenOn: "" });
+export const emptyDeclaration = () => ({ accepted: Object.fromEntries(STATEMENTS.map((s) => [s.id, false])), signedName: "", origin: "own", claimedTakenOn: "" });
 
 const norm = (x) => String(x || "").toLowerCase().replace(/[^a-z\u0900-\u097f ]/g, "").replace(/\s+/g, " ").trim();
 

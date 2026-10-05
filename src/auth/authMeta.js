@@ -126,7 +126,7 @@ function parseJpeg(u8) {
 
 function parsePng(u8) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  const r = { texts: [], exif: null, c2pa: false, c2paText: "", width: 0, height: 0 };
+  const r = { texts: [], exif: null, c2pa: false, width: 0, height: 0 };
   let i = 8;
   while (i + 12 <= u8.length) {
     const len = dv.getUint32(i);
@@ -143,7 +143,7 @@ function parsePng(u8) {
       }
     } else if (type === "zTXt") { const z = data.indexOf(0); if (z > 0) r.texts.push([latin1(data.subarray(0, z)), "(compressed)"]); }
     else if (type === "eXIf") r.exif = data;
-    else if (type === "caBX") { r.c2pa = true; r.c2paText += printable(data) + "\n"; }
+    else if (type === "caBX") r.c2pa = true;
     if (type === "IEND") break;
     i += 12 + len;
   }
@@ -152,7 +152,7 @@ function parsePng(u8) {
 
 function parseWebp(u8) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  const r = { exif: null, xmp: [], c2pa: false, c2paText: "" };
+  const r = { exif: null, xmp: [] };
   let i = 12;
   while (i + 8 <= u8.length) {
     const type = latin1(u8.subarray(i, i + 4));
@@ -160,7 +160,6 @@ function parseWebp(u8) {
     const data = u8.subarray(i + 8, i + 8 + size);
     if (type === "EXIF") r.exif = startsWith(data, "Exif\0\0") ? data.subarray(6) : data;
     else if (type === "XMP ") r.xmp.push(utf8(data));
-    else if (type === "C2PA") { r.c2pa = true; r.c2paText += printable(data) + "\n"; }
     i += 8 + size + (size % 2);
   }
   return r;
@@ -168,40 +167,32 @@ function parseWebp(u8) {
 
 /* MP4 / MOV: walk top-level boxes with Blob slices, so even large videos are cheap to inspect. */
 async function parseMp4(file) {
-  const r = { strings: "", creation: null, c2pa: false, c2paText: "" };
+  const r = { strings: "", creation: null, c2pa: false };
   const head = async (off, n) => new Uint8Array(await file.slice(off, off + n).arrayBuffer());
   let off = 0, guard = 0;
   while (off + 8 <= file.size && guard++ < 200) {
-    try { // a damaged box must never throw away what was already read
-      const h = await head(off, 16);
-      const dv = new DataView(h.buffer);
-      let size = dv.getUint32(0);
-      const type = latin1(h.subarray(4, 8));
-      let hdr = 8;
-      if (size === 1 && h.length >= 16) { size = Number(dv.getBigUint64(8)); hdr = 16; }
-      if (size === 0) size = file.size - off;
-      if (size < hdr) break;
-      if (type === "moov" && size < 8 * 1024 * 1024) {
-        const body = await head(off + hdr, size - hdr);
-        r.strings += printable(body) + "\n";
-        try {
-          const k = latin1(body).indexOf("mvhd");
-          if (k >= 0 && k + 16 <= body.length) {
-            const v = body[k + 4], d = new DataView(body.buffer, body.byteOffset);
-            const secs = v === 1 ? Number(d.getBigUint64(k + 8)) : d.getUint32(k + 8);
-            if (secs > 0) r.creation = new Date((secs - 2082844800) * 1000);
-          }
-        } catch {}
-      } else if (type === "uuid") {
-        const u = await head(off + hdr, 16);
-        const hex = [...u].map((b) => b.toString(16).padStart(2, "0")).join("");
-        if (latin1(u).includes("c2pa") || hex.startsWith("d8fec3d61b0e483c92975828877ec481")) {
-          r.c2pa = true;
-          if (size < 4 * 1024 * 1024) r.c2paText += printable(await head(off + hdr + 16, size - hdr - 16)) + "\n";
-        }
+    const h = await head(off, 16);
+    const dv = new DataView(h.buffer);
+    let size = dv.getUint32(0);
+    const type = latin1(h.subarray(4, 8));
+    let hdr = 8;
+    if (size === 1) { size = Number(dv.getBigUint64(8)); hdr = 16; }
+    if (size === 0) size = file.size - off;
+    if (size < hdr) break;
+    if (type === "moov" && size < 8 * 1024 * 1024) {
+      const body = await head(off + hdr, size - hdr);
+      r.strings += printable(body) + "\n";
+      const k = latin1(body).indexOf("mvhd");
+      if (k >= 0) {
+        const v = body[k + 4], d = new DataView(body.buffer, body.byteOffset);
+        const secs = v === 1 ? Number(d.getBigUint64(k + 8)) : d.getUint32(k + 8);
+        if (secs > 0) r.creation = new Date((secs - 2082844800) * 1000);
       }
-      off += size;
-    } catch { break; }
+    } else if (type === "uuid") {
+      const u = await head(off + hdr, 16);
+      if (latin1(u).includes("c2pa") || [...u].map((b) => b.toString(16).padStart(2, "0")).join("").startsWith("d8fec3d61b0e483c92975828877ec481")) r.c2pa = true;
+    }
+    off += size;
   }
   return r;
 }
@@ -214,20 +205,12 @@ const AI_BLOCK = [
   [/comfyui/i, "ComfyUI"], [/automatic1111|sd-webui|\bsampler:\s*\w+/i, "Stable Diffusion WebUI"], [/invokeai/i, "InvokeAI"],
   [/firefly|generative ?fill|generative ?expand/i, "Adobe Firefly / Generative Fill"], [/synthid|made with google ai/i, "Google AI (SynthID)"],
   [/leonardo\.ai/i, "Leonardo AI"], [/ideogram/i, "Ideogram"], [/synthesia/i, "Synthesia"], [/heygen/i, "HeyGen"],
-  [/openai/i, "OpenAI (Content Credentials)"], [/chatgpt|gpt[-_ ]?image|gpt[-_ ]?4o/i, "ChatGPT image generation"],
-  [/bing image creator|microsoft designer|dreamstudio|clipdrop|playground ?ai|krea\.ai|imagined with meta|meta ai|\bgrok\b/i, "AI image service"],
-  [/canva magic|ai (image )?generator|text[- ]to[- ](image|video)/i, "AI generator"],
+  [/openai/i, "OpenAI (Content Credentials)"],
 ];
 // REVIEW: AI-video / image tools whose names are short or ambiguous, and editors that can change what a photo shows.
-const AI_WEAK = [[/\bgemini\b/i, "Gemini"], [/\bsora\b/i, "Sora"], [/\brunway(ml)?\b/i, "Runway"], [/\bpika\b/i, "Pika"], [/\bkling\b/i, "Kling"], [/luma (ai|dream)|lumalabs/i, "Luma"], [/\bveo\b/i, "Veo"], [/\bimagen\b/i, "Imagen"], [/flux\.1|black forest labs/i, "FLUX"], [/\bd-id\b/i, "D-ID"], [/craiyon|nightcafe/i, "AI image site"]];
+const AI_WEAK = [[/\bsora\b/i, "Sora"], [/\brunway(ml)?\b/i, "Runway"], [/\bpika\b/i, "Pika"], [/\bkling\b/i, "Kling"], [/luma (ai|dream)|lumalabs/i, "Luma"], [/\bveo\b/i, "Veo"], [/\bimagen\b/i, "Imagen"], [/flux\.1|black forest labs/i, "FLUX"], [/\bd-id\b/i, "D-ID"], [/craiyon|nightcafe/i, "AI image site"]];
 const EDITORS_REVIEW = [[/photoshop/i, "Adobe Photoshop"], [/\bgimp\b/i, "GIMP"], [/canva/i, "Canva"], [/pixlr/i, "Pixlr"], [/photopea/i, "Photopea"], [/picsart/i, "Picsart"], [/facetune/i, "Facetune"], [/faceapp/i, "FaceApp"], [/remini/i, "Remini"], [/meitu|beautycam|b612/i, "Beauty editor"]];
 const EDITORS_INFO = [[/lightroom/i, "Adobe Lightroom"], [/snapseed/i, "Snapseed"], [/premiere/i, "Adobe Premiere"], [/capcut/i, "CapCut"], [/final cut/i, "Final Cut"], [/davinci/i, "DaVinci Resolve"], [/lavf|ffmpeg/i, "FFmpeg"]];
-
-/* Inside a Content Credentials (C2PA) manifest any AI-tool name is a real statement, not a hint — treat weak names as AI too. */
-export function scanProvenance(text) {
-  const m = scanMarkers(text);
-  return [...new Set([...m.ai, ...m.aiWeak])];
-}
 
 export function scanMarkers(text) {
   const t = String(text || "");
@@ -242,7 +225,6 @@ export async function readMetadata(file, buf) {
   const container = sniffContainer(u8);
   const out = { container, camera: null, dates: {}, c2pa: false, xmp: null, pngTexts: [], encoder: "", regionsText: "", hasExif: false, photoshopBlock: false };
   const text = [];
-  const c2paText = []; // text found inside Content Credentials manifests
   let exifBytes = null;
 
   try {
@@ -251,19 +233,18 @@ export async function readMetadata(file, buf) {
       exifBytes = j.exif;
       j.xmp.forEach((x) => { out.xmp = parseXmp(x); text.push(x); });
       j.comments.forEach((c) => text.push(c));
-      j.jumbf.forEach((s) => { const p = printable(s); text.push(p); c2paText.push(p); if (/c2pa|jumb/i.test(latin1(s).slice(0, 64)) || /c2pa/i.test(p)) out.c2pa = true; });
+      j.jumbf.forEach((s) => { const p = printable(s); text.push(p); if (/c2pa|jumb/i.test(latin1(s).slice(0, 64)) || /c2pa/i.test(p)) out.c2pa = true; });
       out.photoshopBlock = j.photoshop;
     } else if (container === "png") {
       const p = parsePng(u8);
-      exifBytes = p.exif; out.c2pa = p.c2pa; if (p.c2paText) { text.push(p.c2paText); c2paText.push(p.c2paText); } out.pngTexts = p.texts; out.width = p.width; out.height = p.height;
+      exifBytes = p.exif; out.c2pa = p.c2pa; out.pngTexts = p.texts; out.width = p.width; out.height = p.height;
       p.texts.forEach(([k, v]) => { text.push(`${k}: ${v}`); if (/^XML:com\.adobe\.xmp$/i.test(k)) out.xmp = parseXmp(v); });
     } else if (container === "webp") {
       const w = parseWebp(u8);
       exifBytes = w.exif; w.xmp.forEach((x) => { out.xmp = parseXmp(x); text.push(x); });
-      if (w.c2pa) { out.c2pa = true; text.push(w.c2paText); c2paText.push(w.c2paText); }
     } else if (container === "mp4" || container === "mov" || container === "heic") {
       const m = await parseMp4(file);
-      text.push(m.strings); out.c2pa = m.c2pa; if (m.c2paText) { text.push(m.c2paText); c2paText.push(m.c2paText); }
+      text.push(m.strings); out.c2pa = m.c2pa;
       if (m.creation) out.dates.container = m.creation;
       const enc = /(?:©too|encoder|writing[ -]?app|com\.apple\.quicktime\.software|Lavf\S*|HandBrake\S*)[^\n]{0,60}/i.exec(m.strings);
       if (enc) out.encoder = enc[0].trim();
@@ -293,6 +274,6 @@ export async function readMetadata(file, buf) {
 
   out.regionsText = text.join("\n");
   out.markers = scanMarkers(out.regionsText + (out.xmp?.digitalSourceType ? `\n${out.xmp.digitalSourceType}` : ""));
-  out.c2paAi = out.c2pa ? scanProvenance(c2paText.join("\n")) : []; // AI statements inside Content Credentials (contents are read, not cryptographically validated yet)
+  if (out.c2pa) out.markers = { ...out.markers }; // C2PA presence is reported separately; contents are not cryptographically validated here
   return out;
 }

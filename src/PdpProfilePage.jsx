@@ -16,40 +16,6 @@ function MediaVisual({ item, alt = "" }) { return item?.type === "video" ? <vide
 function initials(name = "PDP") { return name.trim().split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0, 2).toUpperCase() || "PDP"; }
 function slugify(value = "profile") { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "profile"; }
 
-function buildProfessionalSummary(profile, experience = [], jobProfile) {
-  if (profile.about?.trim() && !/^Your professional background and story will appear here/i.test(profile.about.trim())) return profile.about.trim();
-  const role = profile.role && profile.role !== "Professional Profile" ? profile.role : "professional";
-  const years = profile.stats?.experience ? `${profile.stats.experience}+ years of experience` : "practical professional experience";
-  const skills = (profile.skills || []).slice(0, 4).join(", ");
-  const companies = experience.filter(x => x.company).slice(0, 2).map(x => x.company).join(" and ");
-  const evidence = experience.length ? "with experience demonstrated across documented roles and work evidence" : "with a profile built from the available resume information";
-  return `A ${role.toLowerCase()} with ${years}${skills ? `, with strengths in ${skills}` : ""}. ${evidence}${companies ? `, including ${companies}` : ""}. This summary is drafted from the candidate's PDP data and can be refined by the candidate.`;
-}
-
-function yearsFromText(text = "") {
-  const match = String(text).match(/(\d+(?:\.\d+)?)\s*(?:years?|yrs?)/i);
-  return match ? Number(match[1]) : 0;
-}
-
-function deriveCareerSnapshot(profile, experience, roleProfile) {
-  const base = Array.isArray(roleProfile?.snapshot) ? roleProfile.snapshot : [];
-  const derived = [];
-  const labels = [...new Set([...(profile.skills || []), ...(roleProfile?.shortlistTools || []), ...experience.flatMap(x => x.tags || [])])];
-  labels.forEach(label => {
-    const clean = String(label || "").trim();
-    if (!clean || clean.length < 3 || derived.some(x => x.label.toLowerCase() === clean.toLowerCase())) return;
-    const terms = clean.toLowerCase().split(/\s+|\//).filter(x => x.length > 2);
-    const matched = experience.filter(item => {
-      const text = [item.role, item.desc, item.highlight, ...(item.tags || [])].filter(Boolean).join(" ").toLowerCase();
-      return terms.some(term => text.includes(term));
-    });
-    const years = matched.reduce((sum, item) => sum + yearsFromText(item.years), 0);
-    if (matched.length && years > 0) derived.push({ label: clean, value: `${Math.min(Math.round(years), 40)} yrs`, detail: `Documented across ${matched.map(x => x.company).filter(Boolean).slice(0, 3).join(", ")}.`, companies: matched.map(x => x.company).filter(Boolean) });
-  });
-  const merged = [...derived, ...base];
-  return merged.filter((item, index, arr) => arr.findIndex(x => x.label.toLowerCase() === item.label.toLowerCase()) === index).slice(0, 8);
-}
-
 function SectionHead({ icon, title, subtitle, action }) {
   return <div className="pdp3-section-head"><div className="pdp3-section-title"><Icon>{icon}</Icon><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></div>{action && <a href={`#${action.target}`}>{action.label} <Arrow /></a>}</div>;
 }
@@ -57,7 +23,6 @@ function SectionHead({ icon, title, subtitle, action }) {
 export default function Page3() {
   const publicSlug = window.location.pathname.replace(/^\//, "").replace(/\/$/, "");
   const isPublicSlug = publicSlug && !["pdp", "pdp/me"].includes(publicSlug);
-  const isRecruiterView = new URLSearchParams(window.location.search).get("view") === "recruiter";
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [selectedSnapshot, setSelectedSnapshot] = useState(0);
@@ -102,9 +67,6 @@ export default function Page3() {
     recommendations,
   }), [savedMedia, savedIntro, profile, experience, recommendations]);
   const jobProfile = useMemo(() => profile.role && profile.role !== "Professional Profile" ? getRoleProfile(profile) : { category: "Professional", title: "Professional Profile", totalYears: 0, focusLabel: "Featured Work", shortlistTools: [], sections: { projects: "Featured Work", proof: "Work Evidence", achievements: "Achievements", credentials: "Credentials", people: "People I Worked With", journey: "Career Journey" }, snapshot: [] }, [profile]);
-  const heroMedia = useMemo(() => savedMedia.find(item => String(item.id) === String(draft.heroMediaId)) || savedMedia.find(item => item.hero || item.category === "Hero Profile Media") || null, [savedMedia, draft.heroMediaId]);
-  const professionalSummary = useMemo(() => buildProfessionalSummary(profile, experience, jobProfile), [profile, experience, jobProfile]);
-  const careerSnapshot = useMemo(() => deriveCareerSnapshot(profile, experience, jobProfile), [profile, experience, jobProfile]);
 
   useEffect(() => {
     let active = true;
@@ -153,7 +115,7 @@ export default function Page3() {
   const allEvidence = [...uploadedEvidence, ...workEvidence];
   const companyProjects = selectedCompany ? allProjects.filter(p => p.company === selectedCompany) : allProjects;
   const companyEvidence = selectedCompany ? allEvidence.filter(item => item.company === selectedCompany) : allEvidence;
-  const snapshotItems = careerSnapshot || [];
+  const snapshotItems = jobProfile.snapshot || [];
   const activeSnapshot = snapshotItems[selectedSnapshot] || snapshotItems[0];
   const featuredTitle = selectedCompany ? `${jobProfile.focusLabel} at ${selectedCompany}` : jobProfile.focusLabel;
   const featuredSubtitle = selectedCompany
@@ -193,11 +155,11 @@ export default function Page3() {
   };
 
   return (
-    <div className={`pdp3-page ${isRecruiterView ? "pdp3-recruiter-view" : "pdp3-candidate-view"}`}>
+    <div className="pdp3-page">
       <header className="pdp3-topbar">
         <button className="pdp3-brand" onClick={goHome} aria-label="Go to PDP home"><img className="pdp-real-logo" src={pdpLogo} alt="PDP — Professional Digital Profile" /></button>
         <nav><a className="active" href="#overview">Overview</a><a href="#experience">Work</a><a href="#proof">Proof</a><a href="#know-me">Know Me</a><a href="#contact">Contact</a></nav>
-        <div className="pdp3-nav-actions"><button className="pdp3-icon-btn" aria-label="Share profile">↗</button>{!isRecruiterView && <button className="pdp3-outline-btn" onClick={downloadOriginalResume} disabled={!savedResume?.file}>Download Original Resume</button>}</div>
+        <div className="pdp3-nav-actions"><button className="pdp3-icon-btn" aria-label="Share profile">↗</button><button className="pdp3-outline-btn" onClick={downloadOriginalResume} disabled={!savedResume?.file}>Download Original Resume</button></div>
         <button className="pdp3-mobile-menu" aria-label="Open menu">☰</button>
       </header>
 
@@ -206,12 +168,8 @@ export default function Page3() {
 
         <section className="pdp3-hero" id="overview">
           <div className="pdp3-video-card">
-            {heroMedia?.type === "video" && <video className="pdp3-hero-bg-video" src={heroMedia.url} muted autoPlay loop playsInline aria-hidden="true" />}
-            {heroMedia?.type !== "video" && heroMedia?.url && <div className="pdp3-hero-bg-image" style={{ backgroundImage: `url(${heroMedia.url})` }} aria-hidden="true" />}
-            <div className="pdp3-hero-media-content">
-              {heroMedia?.type === "video" ? <video className="pdp3-hero-intro-video" src={heroMedia.url} controls playsInline /> : heroMedia?.url ? <Img src={heroMedia.url} alt={`${profile.name} profile`} /> : savedIntro ? <video className="pdp3-hero-intro-video" src={savedIntro.url} controls playsInline /> : <div className="pdp3-no-intro"><span>{initials(profile.name)}</span><strong>Add a profile photo or video</strong><small>{isRecruiterView ? "No hero media has been added yet." : "Choose a profile image or video from Proof of Work."}</small></div>}
-            </div>
-            <div className="pdp3-video-overlay"><button className="pdp3-play" aria-label="Play hero media">▶</button><div><strong>{heroMedia?.type === "video" ? "Profile Video" : heroMedia?.url ? "Profile Photo" : "Career Introduction"}</strong><span>{heroMedia?.type === "video" ? "Featured hero video" : heroMedia?.url ? "Featured hero photo" : "Professional story"}</span></div></div>
+            {savedIntro ? <video className="pdp3-hero-intro-video" src={savedIntro.url} controls playsInline /> : <div className="pdp3-no-intro"><span>{initials(profile.name)}</span><strong>Career Introduction</strong><small>Upload your career video from Proof of Work.</small></div>}
+            <div className="pdp3-video-overlay"><button className="pdp3-play" aria-label="Play career introduction">▶</button><div><strong>Career Introduction</strong><span>0:38 · Watch my story</span></div></div>
             <div className="pdp3-video-badge">REAL PERSON · REAL STORY</div>
           </div>
           <div className="pdp3-hero-info">
@@ -219,8 +177,9 @@ export default function Page3() {
             <h1>{profile.name} <b>✓</b></h1>
             <h3>{profile.role}</h3>
             <div className="pdp3-meta"><span>⌖ {profile.location}</span><span>◷ {profile.stats.experience} Years Experience</span><span>↗ {profile.pdpUrl}</span></div>
-            <p className="pdp3-lead">{professionalSummary}</p>
-            {!isRecruiterView && <div className="pdp3-actions"><button className="pdp3-primary">✉ Contact Me</button><button className="pdp3-whatsapp">◉ WhatsApp</button><button className="pdp3-ghost">↓ Resume</button></div>}
+            {profile.email && <div className="pdp3-public-email">{profile.email}</div>}
+            <p className="pdp3-lead">{profile.introduction}</p>
+            <div className="pdp3-actions"><button className="pdp3-primary">✉ Contact Me</button><button className="pdp3-whatsapp">◉ WhatsApp</button><button className="pdp3-ghost">↓ Resume</button></div>
             <div className="pdp3-socials"><span>in</span><span>◎</span><span>Be</span><span>↗</span></div>
             {<div className="pdp3-resume-source"><span>RESUME SOURCE</span><strong>{savedResume?.name || "No resume uploaded yet"}</strong><small>{savedResume ? "Original candidate document saved on this device." : "Upload your resume to create your profile source."}</small></div>} 
             <div className="pdp3-score-card">
@@ -251,14 +210,6 @@ export default function Page3() {
           suggestions={shortlistTools}
           onOpenExperience={(company) => { const i = experience.findIndex(x => x.company === company); if (i >= 0) { setSelectedExperience(i); requestAnimationFrame(() => document.getElementById("experience")?.scrollIntoView({ behavior: "smooth", block: "start" })); } }}
         />
-
-        {isRecruiterView && <section className="pdp3-card-section pdp3-recruiter-summary">
-          <div className="pdp3-recruiter-summary-grid">
-            <div><div className="pdp3-detail-kicker">PROFESSIONAL SUMMARY</div><h2>{professionalSummary}</h2><span className="pdp3-drafted-note">PDP-drafted from available profile/resume data</span></div>
-            <div><div className="pdp3-detail-kicker">CAREER SNAPSHOT</div><div className="pdp3-recruiter-snapshot">{careerSnapshot.map(item => <div key={item.label}><strong>{item.label}</strong><b>{item.value}</b></div>)}</div></div>
-            <div className="pdp3-recruiter-contact"><div className="pdp3-detail-kicker">CONTACT</div><a className="pdp3-recruiter-whatsapp" href={`https://wa.me/${String(profile.phone || "").replace(/\D/g, "")}`} target="_blank" rel="noreferrer">◉ Message on WhatsApp</a><div className="pdp3-recruiter-contact-grid"><span>⌖ <b>{profile.location || "Location not added"}</b></span><span>✉ <b>{profile.email || "Email not added"}</b></span><span>◷ <b>{profile.stats.experience || "Experience not added"}</b></span><span>☎ <b>{profile.phone || "Phone not added"}</b></span></div></div>
-          </div>
-        </section>}
 
         <section className="pdp3-card-section pdp3-snapshot" id="snapshot">
           <SectionHead icon="✦" title="Career Snapshot" subtitle="Select a skill or experience area to see the supporting work below." />

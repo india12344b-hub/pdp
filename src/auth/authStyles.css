@@ -78,10 +78,3 @@ button.mae-badge{cursor:pointer}.mae-badge i{font-style:normal;font-size:10px}.m
 .mae-summary .mae-badge{font-size:10px}
 @media(max-width:860px){.mae-body{grid-template-columns:1fr}.mae-options{grid-template-columns:1fr 1fr}.mae-fields{grid-template-columns:1fr}}
 @media(max-width:520px){.mae-options{grid-template-columns:1fr}.mae-card{padding:14px;border-radius:16px}.mae-dl>div{grid-template-columns:1fr}}
-
-/* one-paragraph declaration + freeze warning */
-.mae-decl-text{margin:0 0 10px;font-size:.84rem;line-height:1.65;color:#e1eef8}
-.mae-freeze{display:flex;gap:10px;align-items:flex-start;margin:10px 0;padding:11px 13px;border-radius:11px;border:1px solid rgba(255,110,120,.55);background:rgba(255,90,100,.1);color:#ffd2d5;font-size:.8rem;line-height:1.5}
-.mae-freeze b{flex:0 0 auto;color:#ff8a93;white-space:nowrap}
-.mae-frozen{margin:0 0 18px;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,110,120,.55);background:rgba(255,90,100,.12);color:#ffd2d5;font-size:.86rem;line-height:1.55}
-.mae-frozen b{display:block;color:#ff8a93;margin-bottom:3px}

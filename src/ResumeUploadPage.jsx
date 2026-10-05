@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { clearResume, getResume, saveResume, saveProfile } from "./pdpStorage";
 import { getDraft, saveDraft } from "./pdpDraft";
 import pdpLogo from "./pdp-logo.png";
-import { extractResume } from "./resumeExtractor";
 
 function makePdpId(value = "profile") { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "profile"; }
 
@@ -11,12 +10,8 @@ export default function ResumeUploadPage() {
   const [file, setFile] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
   const [status, setStatus] = useState("Loading saved resume…");
   const [draft, setDraft] = useState(getDraft());
-  const [extracting, setExtracting] = useState(false);
-  const [extracted, setExtracted] = useState(false);
-  const [pdpIdEditing, setPdpIdEditing] = useState(Boolean(getDraft().pdpId));
 
   useEffect(() => {
     getResume().then(record => {
@@ -36,28 +31,8 @@ export default function ResumeUploadPage() {
     if (ok) {
       setFile(f);
       setSaved(false);
-      setExtracting(true);
-      setExtracted(false);
-      setStatus("Reading your resume and extracting profile details…");
-      saveResume(f).then(async () => {
-        try {
-          const parsed = await extractResume(f);
-          const current = getDraft();
-          const patch = {};
-          ["name", "phone", "location", "address", "role", "linkedin"].forEach(k => { if (parsed[k] && !current[k]) patch[k] = parsed[k]; });
-          if (parsed.email && !current.email) patch.email = parsed.email;
-          if (parsed.skills?.length && !current.skills?.length) patch.skills = parsed.skills;
-          if (parsed.stats?.experience && !current.stats?.experience) patch.stats = { ...(current.stats || {}), experience: parsed.stats.experience };
-          if (!current.pdpId && parsed.name) patch.pdpId = makePdpId(parsed.name);
-          const next = saveDraft(patch);
-          setDraft(next);
-          await saveProfile(next);
-          setExtracted(true);
-          setStatus("✓ Resume saved and profile details extracted — please review them below");
-        } catch (error) {
-          setStatus(error?.message || "Resume saved, but PDP could not extract its text. You can enter the details manually.");
-        } finally { setExtracting(false); }
-      }).catch(() => { setExtracting(false); setStatus("Resume selected, but could not be saved locally"); });
+      setStatus("Saving resume…");
+      saveResume(f).then(() => { setSaved(true); setStatus("✓ Resume saved — ready for the next step"); }).catch(() => setStatus("Resume selected, but could not be saved locally"));
     } else {
       setStatus("Please choose a PDF, DOC or DOCX resume.");
     }
@@ -89,21 +64,20 @@ export default function ResumeUploadPage() {
       </section>
 
       <div className={"resume-save-status " + (saved ? "saved" : "")}> <span>{status}</span></div>
-      {!file && !manualMode && <div className="resume-manual-choice"><span>Don’t have a resume?</span><button type="button" onClick={() => { setManualMode(true); setStatus("Create your profile manually — your details save as a draft"); }}>Create my profile manually →</button></div>}
-      {(file || manualMode) && <section className="resume-profile-details">
-        <div><div className="media-kicker">{file ? "PROFILE PREVIEW" : "MANUAL PROFILE SETUP"}</div><h2>{file ? "Tell PDP who this resume belongs to." : "Let’s build your professional profile."}</h2><p>{file ? (extracted ? "PDP extracted these details from your resume. Please review and correct anything before continuing." : "PDP is reading your resume and will fill the details below automatically.") : "Start with the essentials. You can add industry-specific career details in the next steps."}</p></div>
+      {file && <section className="resume-profile-details">
+        <div><div className="media-kicker">PROFILE PREVIEW</div><h2>Tell PDP who this resume belongs to.</h2><p>These details are saved with your PDP draft. We will connect automated resume extraction here in the data layer next — nothing is invented.</p></div>
         <div className="resume-profile-grid">
           <label>FULL NAME<input value={draft.name} onChange={e => { const value = e.target.value; setDraft(saveDraft({ name: value, pdpId: draft.pdpId || makePdpId(value) })); }} placeholder="Your full name" /></label>
-          <label>EMAIL ADDRESS<input className={draft.email ? "pdp-locked-field" : ""} type="email" value={draft.email || ""} onChange={e => { const value = e.target.value; setDraft(saveDraft({ email: value })); }} placeholder="you@example.com" readOnly={Boolean(draft.email)} title={draft.email ? "This email is linked to your PDP account." : "Enter your email address"} /><small className="field-note">{draft.email ? "Account email · linked to this PDP" : "Your account email"}</small></label>
+          <label>EMAIL ADDRESS<input type="email" value={draft.email || ""} onChange={e => { const value = e.target.value; setDraft(saveDraft({ email: value })); }} placeholder="you@example.com" /></label>
           <label>CURRENT / MOST RECENT ROLE<input value={draft.role} onChange={e => { const value = e.target.value; setDraft(saveDraft({ role: value })); }} placeholder="e.g. Business Development Manager" /></label>
           <label>LOCATION<input value={draft.location} onChange={e => { const value = e.target.value; setDraft(saveDraft({ location: value })); }} placeholder="City, Country" /></label>
-          <label>PDP ID <small>(your public link)</small><input value={draft.pdpId || (pdpIdEditing ? "" : makePdpId(draft.name))} onFocus={() => setPdpIdEditing(true)} onChange={e => { const raw = e.target.value; const value = makePdpId(raw); setDraft(saveDraft({ pdpId: raw ? value : "" })); }} onBlur={() => { if (!getDraft().pdpId) { const value = makePdpId(getDraft().name || "profile"); setDraft(saveDraft({ pdpId: value })); } }} placeholder="your-name" /><span className="pdp-id-preview">www.mypdp.in/{draft.pdpId || makePdpId(draft.name || "profile")}</span></label>
+          <label>PDP ID <small>(your public link)</small><input value={draft.pdpId || makePdpId(draft.name)} onChange={e => { const value = makePdpId(e.target.value); setDraft(saveDraft({ pdpId: value })); }} placeholder="your-name" /><span className="pdp-id-preview">www.mypdp.in/{draft.pdpId || makePdpId(draft.name || "profile")}</span></label>
         </div>
       </section>}
 
       <div className="resume-note"><span>ⓘ</span><p><strong>Your original resume stays yours.</strong> PDP creates structured profile information from it; it does not fabricate experience or rewrite factual claims.</p></div>
 
-      <section className="resume-next"><div><div className="media-kicker">NEXT STEP</div><h2>{extracting ? "Reading your resume…" : file ? "Resume ready. Now add your proof." : manualMode ? "Profile draft started. Now add your proof." : "Upload your resume to continue."}</h2><p>{file ? "Continue to the Proof of Work page and connect real photos and videos to your experience." : manualMode ? "You can add real photos and videos now, then complete your career details." : "Upload your resume, or choose the manual profile option above."}</p></div><a className={"resume-continue " + (!file && !manualMode ? "disabled" : "")} href={file || manualMode ? "/build-proof" : "#"} onClick={e => { if (!file && !manualMode) e.preventDefault(); }}>{file || manualMode ? "Continue to Proof of Work →" : "Upload Resume First"}</a></section>
+      <section className="resume-next"><div><div className="media-kicker">NEXT STEP</div><h2>{file ? "Resume ready. Now add your proof." : "Upload your resume to continue."}</h2><p>{file ? "Continue to the Proof of Work page and connect real photos and videos to your experience." : "You can also explore the product first and come back to this step later."}</p></div><a className={"resume-continue " + (!file ? "disabled" : "")} href={file ? "/build-proof" : "#"} onClick={e => { if (!file) e.preventDefault(); }}>{file ? "Continue to Proof of Work →" : "Upload Resume First"}</a></section>
     </main>
   </div>;
 }
