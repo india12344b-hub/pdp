@@ -91,7 +91,7 @@ export default function RecruiterPage() {
           <div className="match-label">MATCHED EXPERIENCE</div>
           <div className="candidate-tags">{(matched.length ? matched : areas.slice(0, 6)).map(tag => <span key={tag}>{tag}</span>)}</div>
           <div className="proof-row">{hasIntro && <span>✓ Career introduction</span>}{proof.filter(x => x.type === "image").length > 0 && <span>✓ {proof.filter(x => x.type === "image").length} photos</span>}{proof.filter(x => x.type === "video").length > 0 && <span>✓ {proof.filter(x => x.type === "video").length} videos</span>}</div>
-          <div className="candidate-actions"><a className="view-pdp" href="/pdp/me">View PDP →</a><button className={shortlisted ? "shortlisted" : ""} onClick={() => setShortlisted(x => !x)}>{shortlisted ? "✓ Shortlisted" : "+ Add to Shortlist"}</button></div>
+          <div className="candidate-actions"><a className="view-pdp" href="/pdp/me?view=recruiter">View PDP →</a><button className={shortlisted ? "shortlisted" : ""} onClick={() => setShortlisted(x => !x)}>{shortlisted ? "✓ Shortlisted" : "+ Add to Shortlist"}</button></div>
         </article> : <div className="empty-state">No candidate profile has been created yet. Start with <a href="/upload-resume">Upload Resume</a> and build the real PDP.</div>}
       </section>
 

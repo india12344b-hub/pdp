@@ -2,7 +2,7 @@ const KEY = "pdp-profile-draft-v2";
 
 const DEFAULT_DRAFT = {
   name: "", role: "", location: "", email: "", phone: "", pdpId: "", introduction: "", about: "",
-  roleProfileId: "", skills: [], experience: [],
+  roleProfileId: "", heroMediaId: "", skills: [], experience: [],
   stats: { experience: "", projects: 0, awards: 0, specialization: "" },
 };
 

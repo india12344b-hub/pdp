@@ -18,6 +18,25 @@ function initials(name = "PDP") {
   return name.trim().split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0, 2).toUpperCase();
 }
 
+async function optimizeHeroImage(file) {
+  if (!file || !file.type.startsWith("image/")) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const targetW = 1920, targetH = 1080, targetRatio = targetW / targetH;
+    const sourceRatio = bitmap.width / bitmap.height;
+    let sw = bitmap.width, sh = bitmap.height, sx = 0, sy = 0;
+    if (sourceRatio > targetRatio) { sw = Math.round(bitmap.height * targetRatio); sx = Math.round((bitmap.width - sw) / 2); }
+    else if (sourceRatio < targetRatio) { sh = Math.round(bitmap.width / targetRatio); sy = Math.round((bitmap.height - sh) / 2); }
+    const scale = Math.min(1, targetW / sw, targetH / sh);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(sw * scale); canvas.height = Math.round(sh * scale);
+    canvas.getContext("2d").drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.88));
+    bitmap.close();
+    return blob ? new File([blob], `${file.name.replace(/\.[^.]+$/, "")}-pdp.webp`, { type: "image/webp", lastModified: Date.now() }) : file;
+  } catch { return file; }
+}
+
 export default function CandidateMediaPage() {
   const lang = loadMemory().lang || "en";
   const t = (en, hi) => (lang === "en" ? en : hi);
@@ -32,6 +51,14 @@ export default function CandidateMediaPage() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [companyInput, setCompanyInput] = useState("");
   const [items, setItems] = useState([]);
+  const heroItems = useMemo(() => {
+    if (draft.heroMediaId) {
+      const selected = items.find(item => String(item.id) === String(draft.heroMediaId));
+      return selected ? [selected] : [];
+    }
+    const legacy = items.find(item => item.hero || item.category === "Hero Profile Media");
+    return legacy ? [legacy] : [];
+  }, [items, draft.heroMediaId]);
   const [note, setNote] = useState("");
   const [intro, setIntro] = useState(null);
   const [resumeRecord, setResumeRecord] = useState(null);
@@ -53,6 +80,8 @@ export default function CandidateMediaPage() {
       setLedger(records || []);
       const restored = attachAuthenticity((media || []).map(item => ({ ...item, file: item.file, url: item.url || (item.file ? URL.createObjectURL(item.file) : "") })), records || []);
       setItems(restored);
+      const legacyHero = restored.find(item => item.hero || item.category === "Hero Profile Media");
+      if (!getDraft().heroMediaId && legacyHero) { const nextDraft = saveDraft({ heroMediaId: legacyHero.id }); setDraft(nextDraft); saveProfile(nextDraft).catch(() => {}); }
       if (!selectedCompany && restored.find(item => item.company)?.company) setSelectedCompany(restored.find(item => item.company).company);
       if (savedIntro?.file) setIntro(attachAuthenticity([{ ...savedIntro, id: "intro", url: URL.createObjectURL(savedIntro.file) }], records || [])[0]);
       setStatus(resume ? "✓ Resume connected" : "No saved resume found — upload one first");
@@ -90,9 +119,29 @@ export default function CandidateMediaPage() {
     setReviewQueue([{ file, mode: "upload", liveEvidence: null, kind: "intro" }]);
   };
 
+  const queueHero = async (file) => {
+    if (frozen || !file || (!file.type.startsWith("image/") && !file.type.startsWith("video/"))) return;
+    const prepared = file.type.startsWith("image/") ? await optimizeHeroImage(file) : file;
+    setReviewQueue([{ file: prepared, mode: "upload", liveEvidence: null, kind: "hero" }]);
+  };
+
   // called by the review modal once the file passed screening and the declaration is signed
   const confirmItem = async ({ file, mode, kind, liveEvidence, report, declaration }) => {
     const meta = recordMeta(report, mode);
+    if (kind === "hero") {
+      // Hero is a view/selection of the same media library item — the file is not duplicated.
+      const record = await saveMedia(file, { category: "Hero Profile Media", company: "", note: "Main PDP hero media", hero: true, ...meta });
+      const rec = buildRecord({ id: record.id, kind: "hero", report, declaration, mode, liveEvidence, expectedName: profile.name });
+      await saveAuthRecord(rec);
+      setLedger(cur => [...cur.filter(r => String(r.id) !== String(record.id)), rec]);
+      const nextHero = { ...record, ...meta, hero: true, file, url: record.url || URL.createObjectURL(file), authenticity: rec };
+      setItems(cur => [...cur, nextHero]);
+      const nextDraft = saveDraft({ heroMediaId: record.id });
+      setDraft(nextDraft);
+      saveProfile(nextDraft).catch(() => {});
+      setStatus(`✓ ${file.type.startsWith("video/") ? "Hero video" : "Hero photo"} saved and optimised for PDP`);
+      return;
+    }
     if (kind === "intro") {
       const record = await saveIntro(file, meta);
       const rec = buildRecord({ id: "intro", kind: "intro", report, declaration, mode, liveEvidence, expectedName: profile.name });
@@ -144,6 +193,17 @@ export default function CandidateMediaPage() {
           <p>Your resume has created the professional structure. Add genuine photos and videos to make that experience visible.</p>
           <div className="media-profile-chip"><span>{initials(profile.name)}</span><div><strong>{profile.name}</strong><small>{profile.role} · {profile.location}</small></div><i>{resumeRecord ? "✓ Resume saved" : "⚠ Resume not connected"}</i></div>
           <div className="media-save-status">{status}</div>
+        </section>
+
+        <section className="hero-media-settings">
+          <div><div className="media-kicker">MAIN PROFILE HERO</div><h2>Choose your Hero photo or video</h2><p>Use either a professional photo or a short video. PDP automatically prepares photos for a standard 16:9 social-style frame and adapts the display to every screen size.</p></div>
+          <div className="hero-media-controls">
+            <input id="hero-media-input" type="file" accept="image/*,video/*" hidden onChange={e => { queueHero(e.target.files?.[0]); e.target.value = ""; }} />
+            <label className="hero-upload-choice" htmlFor="hero-media-input"><span>＋</span><strong>Upload photo or video</strong><small>JPG, PNG, WebP · MP4, MOV, WebM</small></label>
+            <div className="hero-media-existing">
+              {heroItems.length ? heroItems.map(item => <article key={item.id}><div className="hero-media-thumb">{item.type === "video" ? <video src={item.url} muted playsInline /> : <img src={item.url} alt="Selected PDP hero" />}</div><div><strong>{item.type === "video" ? "Hero Video" : "Hero Photo"}</strong><small>Active on main profile</small></div><button type="button" onClick={() => { if (String(draft.heroMediaId) === String(item.id) || item.hero || item.category === "Hero Profile Media") { const nextDraft = saveDraft({ heroMediaId: "" }); setDraft(nextDraft); saveProfile(nextDraft).catch(() => {}); setStatus("Hero media removed from the profile — media remains in your library"); } else removeItem(item.id); }}>Remove from Hero</button></article>) : <div className="hero-media-empty">No hero media selected yet.</div>}
+            </div>
+          </div>
         </section>
 
         <section className="intro-card">

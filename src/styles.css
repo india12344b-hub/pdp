@@ -608,3 +608,20 @@ h1 em,h2 em{font-style:normal;color:var(--cyan)}
 /* Resume onboarding: account email is intentionally read-only once authenticated. */
 .pdp-locked-field { color: #8e98a8 !important; background: rgba(255,255,255,.035) !important; cursor: not-allowed; }
 .field-note { display:block; margin-top:6px; color:#778195; font-size:11px; }
+
+/* PDP responsive foundation: fluid layouts across desktop, tablet and mobile */
+.recruiter-page,.media-page,.resume-page{width:100%;min-width:0;overflow-x:hidden}
+.recruiter-shell,.media-shell,.resume-shell{width:min(100%,var(--responsive-max,1500px));box-sizing:border-box}
+.recruiter-topbar{padding-inline:clamp(18px,4vw,72px)}
+@media(min-width:1500px){.recruiter-shell{max-width:1500px}.recruiter-topbar nav{gap:clamp(20px,1.8vw,32px)}}
+@media(max-width:1100px){.recruiter-topbar{gap:16px}.recruiter-topbar nav{gap:14px;font-size:12px}.recruiter-back{display:none}.recruiter-shell{padding-top:48px}.candidate-card{padding:18px}}
+@media(max-width:800px){.recruiter-shell{padding-inline:18px}.recruiter-hero h1{font-size:clamp(40px,11vw,58px)}.candidate-card-top{align-items:flex-start}.evidence-badge{margin-left:auto}.candidate-actions{flex-direction:column}.flow-cards{grid-template-columns:1fr}.requirement-box{padding:16px}.requirement-actions{gap:12px}.requirement-action-group{flex-wrap:wrap}.candidate-meta span{font-size:10px}}
+@media(max-width:480px){.recruiter-shell{padding-inline:14px}.recruiter-hero h1{font-size:42px}.candidate-card{border-radius:14px}.candidate-card-top{display:grid;grid-template-columns:46px 1fr}.evidence-badge{grid-column:1/-1;margin:4px 0 0}.candidate-meta{gap:6px}.candidate-meta span{width:100%;box-sizing:border-box}.requirement-action-group{width:100%;display:grid;grid-template-columns:1fr}.requirement-search-btn{margin-left:0;width:100%;justify-content:center}}
+
+/* Candidate hero-media controls */
+.hero-media-settings{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.9fr);gap:28px;align-items:center;margin:28px 0;background:linear-gradient(145deg,#0c1c2d,#081522);border:1px solid rgba(121,180,255,.15);border-radius:20px;padding:24px;box-shadow:0 24px 70px rgba(0,20,55,.22)}
+.hero-media-settings h2{font-size:clamp(22px,3vw,32px);margin:8px 0}.hero-media-settings p{max-width:650px;color:#8198aa;font-size:12px;line-height:1.7;margin:0}
+.hero-media-controls{display:grid;gap:12px}.hero-upload-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:145px;border:1px dashed rgba(85,190,255,.38);border-radius:14px;background:rgba(5,20,36,.75);cursor:pointer;text-align:center;padding:18px;box-sizing:border-box}.hero-upload-choice:hover{border-color:rgba(85,210,255,.75);background:rgba(8,29,48,.85)}.hero-upload-choice span{font-size:28px;color:#5bdcff}.hero-upload-choice strong{font-size:13px;margin-top:7px}.hero-upload-choice small{font-size:9px;color:#6f8999;margin-top:5px}
+.hero-media-existing{display:grid;gap:8px}.hero-media-existing article{display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:10px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(4,17,30,.65)}.hero-media-thumb{width:54px;height:42px;overflow:hidden;border-radius:7px}.hero-media-thumb img,.hero-media-thumb video{width:100%;height:100%;object-fit:cover}.hero-media-existing strong,.hero-media-existing small{display:block}.hero-media-existing strong{font-size:10px}.hero-media-existing small{font-size:8px;color:#6f8999;margin-top:3px}.hero-media-existing button{border:1px solid rgba(255,255,255,.12);background:transparent;color:#9eb2bf;border-radius:7px;padding:7px 9px;font-size:8px;cursor:pointer}.hero-media-empty{font-size:10px;color:#607988;padding:12px;text-align:center;border:1px dashed rgba(255,255,255,.08);border-radius:9px}
+@media(max-width:800px){.hero-media-settings{grid-template-columns:1fr;padding:18px}.hero-upload-choice{min-height:125px}}
+@media(max-width:480px){.hero-media-settings{border-radius:15px}.hero-media-existing article{grid-template-columns:48px 1fr}.hero-media-thumb{width:48px}.hero-media-existing button{grid-column:2;justify-self:start}}
