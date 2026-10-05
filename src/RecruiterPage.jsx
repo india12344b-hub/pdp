@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import pdpLogo from "./pdp-logo.png";
 
 const RECRUITER_LOGIN = "/recruiters/login";
@@ -25,6 +25,22 @@ const WORKFLOW = [
 ];
 
 export default function RecruiterPage() {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const openLogin = (e) => {
+    if (e) e.preventDefault();
+    setSubmitted(false);
+    setLoginOpen(true);
+  };
+
+  const submitLogin = (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubmitted(true);
+  };
+
   return (
     <div className="recruiter-page recruiter-landing">
       <header className="recruiter-topbar recruiter-marketing-bar">
@@ -36,8 +52,8 @@ export default function RecruiterPage() {
           <a href="#trust">Trust & Proof</a>
         </nav>
         <div className="recruiter-auth-actions">
-          <a className="recruiter-login-link" href={RECRUITER_LOGIN}>Recruiter Login</a>
-          <a className="recruiter-primary-small" href={RECRUITER_LOGIN}>Get Recruiter Access</a>
+          <a className="recruiter-login-link" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login</a>
+          <a className="recruiter-primary-small" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Access</a>
         </div>
       </header>
 
@@ -48,7 +64,7 @@ export default function RecruiterPage() {
             <h1>Hire with <em>more confidence.</em><br />Spend less time screening.</h1>
             <p className="recruiter-hero-lead">PDP gives recruiters a candidate-first professional profile where experience is connected to visual proof — so you can understand a person before the interview, not after it.</p>
             <div className="recruiter-hero-actions">
-              <a className="recruiter-primary-btn" href={RECRUITER_LOGIN}>Login to Recruiter Account <span>→</span></a>
+              <a className="recruiter-primary-btn" href={RECRUITER_LOGIN} onClick={openLogin}>Login to Recruiter Account <span>→</span></a>
               <a className="recruiter-secondary-btn" href="#how-it-works">See how PDP works <span>↓</span></a>
             </div>
             <div className="recruiter-trust-line"><span>✓ Candidate-first</span><span>✓ Visual proof of work</span><span>✓ Built for faster screening</span></div>
@@ -104,10 +120,31 @@ export default function RecruiterPage() {
 
         <section className="recruiter-section recruiter-cta">
           <div><div className="section-kicker">READY TO RECRUIT DIFFERENTLY?</div><h2>Start with a recruiter account.</h2><p>Login to discover PDP professionals, review their evidence and build your shortlist.</p></div>
-          <a className="recruiter-primary-btn" href={RECRUITER_LOGIN}>Recruiter Login <span>→</span></a>
+          <a className="recruiter-primary-btn" href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login <span>→</span></a>
         </section>
       </main>
-      <footer className="recruiter-footer"><span>mypdp.in</span><span>Trust · Transparency · Real Talent</span><a href={RECRUITER_LOGIN}>Recruiter Login</a></footer>
+      <footer className="recruiter-footer"><span>mypdp.in</span><span>Trust · Transparency · Real Talent</span><a href={RECRUITER_LOGIN} onClick={openLogin}>Recruiter Login</a></footer>
+
+      {loginOpen && (
+        <div className="recruiter-login-overlay" role="dialog" aria-modal="true" aria-labelledby="recruiter-login-title" onMouseDown={(e) => { if (e.target === e.currentTarget) setLoginOpen(false); }}>
+          <section className="recruiter-inline-login">
+            <button className="recruiter-login-close" type="button" aria-label="Close login" onClick={() => setLoginOpen(false)}>×</button>
+            <div className="section-kicker">RECRUITER ACCOUNT</div>
+            <h2 id="recruiter-login-title">Welcome back.</h2>
+            <p>Login to discover PDP professionals, review proof and build your shortlist.</p>
+            <button type="button" className="google-login-btn" onClick={() => setSubmitted(true)}><span className="google-g">G</span> Continue with Google</button>
+            <div className="login-divider"><span>or continue with email</span></div>
+            <form onSubmit={submitLogin}>
+              <label>WORK EMAIL</label>
+              <input type="email" value={email} onChange={e => { setEmail(e.target.value); setSubmitted(false); }} placeholder="name@company.com" autoComplete="email" autoFocus />
+              <button className="login-submit" type="submit">Continue <span>→</span></button>
+            </form>
+            {submitted && <div className="login-message">Your recruiter login flow is ready. Email/Google verification will be connected to the recruiter account backend.</div>}
+            <p className="login-note">Authorised hiring professionals and organisations only.</p>
+            <a className="inline-full-login" href={RECRUITER_LOGIN}>Open full recruiter login page →</a>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
