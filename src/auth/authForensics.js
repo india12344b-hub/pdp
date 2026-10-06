@@ -101,13 +101,14 @@ export function motionScore(grayA, grayB) {
   return s / a.length;
 }
 
-/* Resolutions typical of AI image generators (multiples of 64, common aspect ratios). */
-const GEN_SQUARE = [512, 640, 768, 832, 1024, 1280, 1536, 2048];
-const GEN_PAIRS = ["1344x768", "768x1344", "1024x1792", "1792x1024", "1216x832", "832x1216", "1152x896", "896x1152", "1024x1536", "1536x1024", "1344x896", "896x1344", "1440x810"];
+/* Resolutions typical of AI image generators (DALL·E / ChatGPT, Midjourney, Gemini/Imagen, Stable Diffusion, FLUX, Ideogram…). */
+const GEN_SQUARE = [512, 640, 768, 832, 1024, 1280, 1536, 2048, 4096];
+const GEN_PAIRS = new Set(["1344x768", "1024x1792", "1792x1024", "1216x832", "1152x896", "1024x1536", "1536x1024", "1344x896", "1408x768", "1456x816", "1472x832", "1184x864", "1248x832", "1568x672", "1792x768", "1920x1088", "1280x768", "1280x704", "960x544", "1152x768", "1280x896", "2048x1152", "1664x928", "2752x1536", "1536x1536"]);
 export function dimsLookGenerated(w, h) {
   if (!w || !h) return false;
   if (w === h && GEN_SQUARE.includes(w)) return true;
-  return GEN_PAIRS.includes(`${w}x${h}`) || GEN_PAIRS.includes(`${h}x${w}`);
+  if (GEN_PAIRS.has(`${w}x${h}`) || GEN_PAIRS.has(`${h}x${w}`)) return true;
+  return w >= 512 && h >= 512 && w % 64 === 0 && h % 64 === 0; // both sides multiples of 64: typical of diffusion models, rare for cameras
 }
 
 const SCREEN_DIMS = ["1080x1920", "1170x2532", "1284x2778", "1179x2556", "1290x2796", "1440x3200", "1080x2400", "1080x2340", "1920x1080", "2560x1440", "3840x2160", "1366x768", "1440x900", "2880x1800"];

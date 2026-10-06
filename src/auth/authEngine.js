@@ -7,8 +7,8 @@
             3 pixels       (noise, compression, resolution heuristics — weak signals)
             4 duplicates   (exact hash + near-duplicate hash against what is already on the profile)
 
-  Decision: "block"   the file's own metadata says it is AI-generated, or it is an exact duplicate
-            "review"  signals worth a human look → the item is saved but marked Under review and earns no trust score
+  Decision: "block"   the file's own metadata / Content Credentials say it is AI-generated, or it is an exact duplicate
+            "review"  signals worth a human look, or no proof of origin at all → saved as Under review, no trust score
             "accept"  nothing found → tier "live" (captured with PDP camera) or "declared" (signed originality declaration)
 
   Honest limits (shown to users): screening lowers risk, it does not prove authenticity. A file that passes is
@@ -20,6 +20,14 @@ import { toGray, dHash, hamming, noiseStd, flatRatio, elaStats, motionScore, dim
 
 export const ENGINE = { name: "pdp-media-authenticity", version: "0.1.0" };
 export const MAX_BYTES = 250 * 1024 * 1024;
+/*
+  STRICT_PROVENANCE
+  An uploaded file with NO camera details and NO Content Credentials cannot be told apart from an AI image whose
+  metadata was stripped (screenshots, chat-app forwards and re-saves all look the same). When true, such uploads are
+  accepted only as "Under review" (no PDP Score credit until a person clears them, or the user captures the moment
+  live). Set to false to relax this once the human-review queue exists.
+*/
+export const STRICT_PROVENANCE = true;
 export const LIMITS_NOTE = "Screening lowers risk but cannot prove a file is authentic. It can miss high-quality AI media and can occasionally flag genuine files — that is why PDP also uses live capture, a signed declaration and human review.";
 
 const VIRTUAL_CAM = /obs|virtual|manycam|xsplit|snap camera|splitcam|vcam|mmhmm|ndi|unity video/i;
@@ -79,7 +87,10 @@ export async function screenMedia(file, opts = {}) {
       pngTextKeys: (meta.pngTexts || []).map(([k]) => k),
     };
     const m = meta.markers;
-    if (m.ai.length || /explicit-ai/.test(meta.xmp?.digitalSourceType || "")) {
+    if (meta.c2paAi?.length) {
+      add(flag("ai-content-credentials", "block", "Content Credentials say this was made with AI", `Its embedded Content Credentials (C2PA) name: ${meta.c2paAi.join(", ")}. PDP evidence must be genuine work. If this is a mistake, capture it live with the PDP camera instead.`));
+    }
+    if (m.ai.length) {
       add(flag("ai-label", "block", "File is labelled as AI-generated", `Its own metadata names: ${[...new Set(m.ai)].join(", ")}. PDP evidence must be genuine work. If this is a mistake, capture it live with the PDP camera instead.`));
     }
     if (m.aiWeak.length) add(flag("ai-tool-name", "review", "Mentions an AI media tool", `Metadata mentions ${[...new Set(m.aiWeak)].join(", ")}. A person will take a look before this counts toward your PDP Score.`));
@@ -89,7 +100,7 @@ export async function screenMedia(file, opts = {}) {
     const cam = meta.camera;
     const hasCam = !!(cam && (cam.make || cam.model));
     if (hasCam) { positives.push(`Camera details present: ${[cam.make, cam.model].filter(Boolean).join(" ")}`); report.badges.push("camera-metadata"); }
-    if (meta.c2pa) { positives.push("Content Credentials (C2PA) marker present — not cryptographically validated yet"); report.badges.push("content-credentials"); }
+    if (meta.c2pa && !meta.c2paAi?.length) { positives.push("Content Credentials (C2PA) present, with no AI statement — not cryptographically validated yet"); report.badges.push("content-credentials"); }
     checks.push({ id: "metadata", label: "Metadata", status: m.ai.length ? "block" : m.aiWeak.length || m.editors.length ? "review" : hasCam || meta.c2pa ? "pass" : "info",
       detail: m.ai.length ? "Labelled as AI-generated." : hasCam ? `Camera details found (${[cam.make, cam.model].filter(Boolean).join(" ")}).` : "Little or no camera metadata (common when files are shared via chat apps)." });
 
@@ -122,8 +133,9 @@ export async function screenMedia(file, opts = {}) {
 
       const cam = meta?.camera, hasCam = !!(cam && (cam.make || cam.model));
       const px = [];
-      if (!hasCam && dimsLookGenerated(natural.w, natural.h) && noise < 0.9 && flat < 0.6) {
-        add(flag("synthetic-look", "review", "Looks like a generated image", `Size ${natural.w}×${natural.h}, very smooth texture and no camera details — a pattern common in AI images (also seen in some graphics).`));
+      if (!hasCam && dimsLookGenerated(natural.w, natural.h)) {
+        const smooth = noise < 0.9 && flat < 0.6;
+        add(flag("synthetic-look", "review", "Looks like a generated image", `Size ${natural.w}×${natural.h} is a size AI image tools commonly produce${smooth ? ", the texture is unusually smooth" : ""}, and there are no camera details. Graphics and screenshots can look like this too.`));
         px.push("review");
       }
       if (ela && ela.ratio > 16 && ela.mean > 1.5) { add(flag("compression-inconsistent", "review", "Uneven compression in parts of the image", "Some regions behave differently from the rest, which can happen when parts of an image are pasted in.")); px.push("review"); }
@@ -150,6 +162,18 @@ export async function screenMedia(file, opts = {}) {
     }
   } catch {
     checks.push({ id: "pixels", label: "Manipulation signals", status: "info", detail: "This browser could not decode the file for pixel checks; metadata checks still ran." });
+  }
+
+  /* ---- provenance of an upload: where does this file say it came from? ---- */
+  if (mode === "upload") {
+    const cam = meta?.camera;
+    const hasCam = !!(cam && (cam.make || cam.model));
+    const hasCreds = !!(meta?.c2pa && !meta?.c2paAi?.length);
+    if (STRICT_PROVENANCE && !hasCam && !hasCreds && !flags.some((f) => f.severity === "block")) {
+      add(flag("no-provenance", "review", "No proof of where this file came from", `The file has no camera details and no Content Credentials. That is normal for screenshots and photos forwarded on chat apps — but an AI-generated image looks exactly the same, so PDP can't accept it automatically. It will be reviewed. For instant trust, capture the moment live with the PDP camera.`));
+    }
+    checks.push({ id: "origin", label: "Proof of origin", status: hasCam || hasCreds ? "pass" : STRICT_PROVENANCE ? "review" : "info",
+      detail: hasCam ? `Camera details found (${[cam.make, cam.model].filter(Boolean).join(" ")}).` : hasCreds ? "Content Credentials found, with no AI statement." : "No camera details or Content Credentials in this file." });
   }
 
   /* ---- 1. provenance ---- */

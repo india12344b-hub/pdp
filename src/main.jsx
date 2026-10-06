@@ -8,6 +8,7 @@ import RecruiterPage from "./RecruiterPage";
 import RecruiterLoginPage from "./RecruiterLoginPage";
 import ProofOfWorkPage from "./ProofOfWorkPage";
 import ResumeUploadPage from "./ResumeUploadPage";
+import ProfessionalLoginPage from "./ProfessionalLoginPage";
 import PdpPal from "./PdpPal";
 import "./styles.css";
 import "./professionals.css";
@@ -23,17 +24,18 @@ if (!favicon.parentNode) document.head.appendChild(favicon);
 
 const pathname = window.location.pathname.replace(/\/$/, "") || "/";
 const isProfessionalsPage = pathname === "/professionals";
+const isProfessionalLoginPage = pathname === "/professional-login" || pathname === "/login" || pathname === "/signup";
 const isPdpPage = pathname === "/pdp" || pathname === "/pdp/me";
 const isRecruiterPage = pathname === "/recruiters";
 const isRecruiterLoginPage = pathname === "/recruiters/login" || pathname === "/recruiter-login";
 const isCandidateMediaPage = pathname === "/build-proof" || pathname === "/candidate-media";
 const isResumePage = pathname === "/upload-resume" || pathname === "/resume" || pathname === "/create";
-const reservedPaths = new Set(["/", "/professionals", "/pdp", "/pdp/me", "/recruiters", "/recruiters/login", "/recruiter-login", "/build-proof", "/candidate-media", "/upload-resume", "/resume", "/create"]);
+const reservedPaths = new Set(["/", "/professionals", "/professional-login", "/login", "/signup", "/pdp", "/pdp/me", "/recruiters", "/recruiters/login", "/recruiter-login", "/build-proof", "/candidate-media", "/upload-resume", "/resume", "/create"]);
 const isPublicPdpPage = !reservedPaths.has(pathname) && /^\/[a-z0-9][a-z0-9-]{2,39}$/i.test(pathname);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {isProfessionalsPage ? <ProfessionalsPage /> : isPdpPage || isPublicPdpPage ? <PdpProfilePage /> : isRecruiterLoginPage ? <RecruiterLoginPage /> : isRecruiterPage ? <RecruiterPage /> : isCandidateMediaPage ? <ProofOfWorkPage /> : isResumePage ? <ResumeUploadPage /> : <App />}
+    {isProfessionalLoginPage ? <ProfessionalLoginPage /> : isProfessionalsPage ? <ProfessionalsPage /> : isPdpPage || isPublicPdpPage ? <PdpProfilePage /> : isRecruiterLoginPage ? <RecruiterLoginPage /> : isRecruiterPage ? <RecruiterPage /> : isCandidateMediaPage ? <ProofOfWorkPage /> : isResumePage ? <ResumeUploadPage /> : <App />}
     <PdpPal />
   </React.StrictMode>
 );

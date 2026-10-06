@@ -2,8 +2,11 @@ const DB_NAME = "pdp-local-data";
 const DB_VERSION = 2; // v2 adds the "ledger" store (authenticity records)
 const STORES = { resume: "resume", media: "media", intro: "intro", ledger: "ledger" };
 const TOKEN_KEY = "pdp-profile-token-v1";
+const AUTH_TOKEN_KEY = "pdp-auth-token-v1";
 
 function token() {
+  const auth = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (auth) return auth;
   let value = localStorage.getItem(TOKEN_KEY);
   if (!value) { value = crypto.randomUUID(); localStorage.setItem(TOKEN_KEY, value); }
   return value;
@@ -89,6 +92,9 @@ export async function getMedia() {
 }
 export async function deleteMedia(id) { try { await api(`/api/media/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {} deleteAuthRecord(id).catch(() => {}); return withStore(STORES.media, "readwrite", store => store.delete(id)); }
 export async function clearMedia() { try { await api("/api/media", { method: "DELETE" }); } catch {} try { const all = await getAuthRecords(); await Promise.all(all.filter(r => r.kind !== "intro").map(r => deleteAuthRecord(r.id))); } catch {} return withStore(STORES.media, "readwrite", store => store.clear()); }
+
+export function setAuthToken(value) { if (value) localStorage.setItem(AUTH_TOKEN_KEY, value); }
+export function clearAuthToken() { localStorage.removeItem(AUTH_TOKEN_KEY); }
 
 export async function saveProfile(profile) {
   try { return await apiJson("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profile) }); }

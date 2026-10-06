@@ -4,6 +4,7 @@ import heroVisual from "./hero-bg.png";
 import proofDevice from "./proof-device.png";
 import recruiterWork from "./recruiter-work.png";
 import cityBg from "./city-bg.png";
+import palImage from "./pdp-pal.png";
 
 const LOGIN = "/recruiters/login";
 
@@ -99,6 +100,22 @@ export default function RecruiterPage() {
           <div className="rp-work-image"><img src={recruiterWork} alt="Recruiter evaluating talent" /></div>
           <div className="rp-results-copy"><div className="rp-pill">SAVE TIME. GET BETTER OUTPUT.</div><h2>Built for Recruiters.<br /><span>Designed for Results.</span></h2><p>PDP helps you cut through the noise, so you can focus on what matters — finding the right talent.</p></div>
           <div className="rp-benefits">{benefits.map(([icon,title,text]) => <div key={title}><i>{icon}</i><h3>{title}</h3><p>{text}</p></div>)}</div>
+        </section>
+
+        <section className="rp-section rp-pal" id="pdp-pal-recruiter">
+          <div className="rp-pal-art"><div className="rp-pal-orbit"></div><img src={palImage} alt="PDP Pal recruiting assistant" /></div>
+          <div className="rp-pal-copy">
+            <div className="rp-pill">MEET PDP PAL</div>
+            <h2>Your recruiting assistant.<br /><span>Inside PDP.</span></h2>
+            <p>PDP Pal helps recruiters work faster by understanding what you need, guiding you through candidate profiles and helping you make sense of the evidence — instead of making you search through everything yourself.</p>
+            <div className="rp-pal-grid">
+              <div><i>⌕</i><div><h3>Understand the requirement</h3><p>Turn a role requirement into the experience and capability signals that matter.</p></div></div>
+              <div><i>◉</i><div><h3>Find relevant talent</h3><p>Guide your search toward profiles with matching skills, experience and proof.</p></div></div>
+              <div><i>▣</i><div><h3>Explain candidate proof</h3><p>Help you quickly understand what a video, photo, project or company evidence demonstrates.</p></div></div>
+              <div><i>☆</i><div><h3>Help build the shortlist</h3><p>Compare the information you have and support faster, more confident decisions.</p></div></div>
+            </div>
+            <div className="rp-pal-note">Ask PDP Pal questions while you recruit — by text or voice where available.</div>
+          </div>
         </section>
 
         <section className="rp-section rp-how" id="how">

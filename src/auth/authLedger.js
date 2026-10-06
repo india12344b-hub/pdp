@@ -3,7 +3,7 @@
   Storage itself (IndexedDB + /api/authenticity) lives in pdpStorage.js: saveAuthRecord / getAuthRecords / deleteAuthRecord.
 */
 import { ENGINE } from "./authEngine";
-import { DECLARATION_VERSION, statementsFor, ORIGINS } from "./authDeclaration";
+import { DECLARATION_VERSION, FREEZE_WARNING, statementsFor, ORIGINS } from "./authDeclaration";
 
 export const TIERS = {
   live: { label: "Captured live", hi: "Live captured", cls: "live", icon: "●", tip: "Captured with the PDP camera." },
@@ -19,7 +19,7 @@ export function buildRecord({ id, report, declaration, mode, liveEvidence = null
     source: { mode, origin: mode === "live" ? "pdp-camera" : declaration.origin, originLabel: mode === "live" ? "Captured with PDP camera" : ORIGINS.find((o) => o.id === declaration.origin)?.en || "", claimedTakenOn: declaration.claimedTakenOn || null },
     file: { ...report.file, phash: report.phash },
     screening: { engine: ENGINE, ranAt: report.ranAt, decision: report.decision, tier: report.tier, badges: report.badges, flags: report.flags, positives: report.positives, checks: report.checks, metadata: report.metadata, limits: report.limits },
-    declaration: { version: DECLARATION_VERSION, statements: accepted, signedName: declaration.signedName.trim(), expectedName, signedAt: new Date().toISOString(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "" },
+    declaration: { version: DECLARATION_VERSION, warningShown: FREEZE_WARNING.en, statements: accepted, signedName: declaration.signedName.trim(), expectedName, signedAt: new Date().toISOString(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "", userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "" },
     liveEvidence,
   };
 }
