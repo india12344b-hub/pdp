@@ -54,13 +54,13 @@ export default function RecruiterPage() {
           <a href="/">Home</a>
           <a href="/professionals">For Professionals</a>
           <a className="active" href="/recruiters">For Recruiters</a>
-          <a href="#why">About</a>
-          <a href="#cta">Pricing</a>
+          <a href="/recruiters/nexus-9">NEXUS-9</a><a href="#why">About</a>
+          <a href="/recruiters/subscription">Pricing</a>
         </nav>
         <div className="rp-nav-right">
           <div className="rp-search">⌕ <span>Search by name, skills, location...</span></div>
           <a href={LOGIN} className="rp-login-outline" onClick={openLogin}>Recruiter Login</a>
-          <button className="rp-access" onClick={() => document.getElementById("cta")?.scrollIntoView({behavior:"smooth"})}>Get Recruiter Access</button>
+          <button className="rp-access" onClick={() => { window.location.href = "/recruiters/subscription"; }}>Get Recruiter Access</button>
         </div>
       </header>
 
@@ -72,7 +72,7 @@ export default function RecruiterPage() {
             <p>PDP gives you visual access to a candidate's actual work, skills and experience — so you can hire with confidence, reduce hiring risk and get better results.</p>
             <div className="rp-actions">
               <a href={LOGIN} className="rp-primary" onClick={openLogin}>♙ &nbsp; Login as Recruiter</a>
-              <a href="#how" className="rp-secondary">▷ &nbsp; Learn More</a>
+              <a href="/recruiters/nexus-9" className="rp-secondary">◉ &nbsp; Explore NEXUS-9</a>
             </div>
           </div>
           <div className="rp-hero-art">
@@ -94,6 +94,10 @@ export default function RecruiterPage() {
             <div className="rp-device"><img src={proofDevice} alt="PDP candidate profile with proof" /></div>
             <div className="rp-proof-list">{proofItems.map(([icon,title,text]) => <div className="rp-proof-item" key={title}><i>{icon}</i><div><h3>{title}</h3><p>{text}</p></div></div>)}</div>
           </div>
+        </section>
+
+        <section className="rp-section rp-nexus-usp">
+          <div className="rp-nexus-copy"><div className="rp-pill">OUR RECRUITER DIFFERENTIATOR</div><h2>Go beyond Boolean.<br/><span>Meet PDP NEXUS-9.</span></h2><p>Instead of simply matching keywords, PDP can understand the organisation, the role, the candidate's career story and available evidence — then rank the strongest fits and explain why.</p><div className="rp-nexus-actions"><a className="rp-primary" href="/recruiters/nexus-9">See NEXUS-9 in action →</a><a className="rp-secondary" href="/recruiters/candidates">Open candidate selection</a></div></div><div className="rp-nexus-mini"><div><b>Organisation DNA</b><span>+</span><b>Role DNA</b><span>+</span><b>Candidate Intelligence</b><span>+</span><b>Evidence</b></div><strong>Better Fit</strong><small>Ranked candidates with reasons, scores and areas to verify.</small></div>
         </section>
 
         <section className="rp-section rp-results">
@@ -132,12 +136,12 @@ export default function RecruiterPage() {
 
         <section className="rp-cta" id="cta" style={{backgroundImage:`linear-gradient(rgba(2,12,22,.22),rgba(2,12,22,.76)), url(${cityBg})`}}>
           <h2>Ready to hire better?</h2><p>Join thousands of recruiters who trust PDP for verified, visual and authentic talent.</p>
-          <div className="rp-actions"><a href={LOGIN} className="rp-primary" onClick={openLogin}>♙ &nbsp; Login as Recruiter</a><a href={LOGIN} className="rp-secondary" onClick={openLogin}>♙ &nbsp; Get Recruiter Access</a></div>
-          <small>Questions? &nbsp;<a href="mailto:support@mypdp.in">Contact us</a> &nbsp; | &nbsp; support@mypdp.in</small>
+          <div className="rp-actions"><a href={LOGIN} className="rp-primary" onClick={openLogin}>♙ &nbsp; Login as Recruiter</a><a href="/recruiters/subscription" className="rp-secondary">♙ &nbsp; Get Recruiter Access</a></div>
+          <small><a href="/recruiters/subscription">View recruiter plans</a> &nbsp; | &nbsp; Questions? &nbsp;<a href="mailto:support@mypdp.in">Contact us</a> &nbsp; | &nbsp; support@mypdp.in</small>
         </section>
       </main>
 
-      <footer className="rp-footer"><div className="rp-footer-brand"><img src={pdpLogo} alt="mypdp.in" /><span>Your Performance Display Platform</span></div><div className="rp-footer-links"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/recruiters">For Recruiters</a><a href="#why">About</a><a href="#cta">Contact</a></div><div className="rp-social">in &nbsp; ▶ &nbsp; 𝕏</div></footer>
+      <footer className="rp-footer"><div className="rp-footer-brand"><img src={pdpLogo} alt="mypdp.in" /><span>Your Performance Display Platform</span></div><div className="rp-footer-links"><a href="/">Home</a><a href="/professionals">For Professionals</a><a href="/recruiters">For Recruiters</a><a href="/recruiters/nexus-9">NEXUS-9</a><a href="#why">About</a><a href="#cta">Contact</a></div><div className="rp-social">in &nbsp; ▶ &nbsp; 𝕏</div></footer>
 
       {loginOpen && <div className="rp-overlay" onMouseDown={e => e.target===e.currentTarget && setLoginOpen(false)}><div className="rp-login-modal"><button className="rp-close" onClick={()=>setLoginOpen(false)}>×</button><div className="rp-pill">RECRUITER ACCOUNT</div><h2>Welcome back.</h2><p>Login to discover PDP professionals, review proof and build your shortlist.</p><button className="rp-google" onClick={()=>setMessage("Google login will connect to the recruiter account backend.")}><b>G</b> Continue with Google</button><div className="rp-or"><span>or continue with email</span></div><form onSubmit={submit}><label>WORK EMAIL</label><input type="email" required value={email} onChange={e=>{setEmail(e.target.value);setMessage("")}} placeholder="name@company.com"/><button className="rp-primary full">Continue →</button></form>{message && <div className="rp-message">{message}</div>}<a className="rp-full-login" href={LOGIN}>Open full recruiter login page →</a></div></div>}
     </div>

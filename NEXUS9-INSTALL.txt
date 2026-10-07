@@ -1,0 +1,6 @@
+PDP NEXUS-9 routes:
+/recruiters/nexus-9
+/recruiters/nexus9
+/nexus-9
+
+Cloudflare Pages: ensure public/_redirects is included in the build.

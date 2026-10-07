@@ -21,7 +21,7 @@ export default function RecruiterLoginPage() {
           {mode === "email" && <button className="login-submit" type="submit">Continue <span>→</span></button>}
         </form>
         {submitted && <div className="login-message">Your login flow is ready. Email/Google verification will be connected to the recruiter account backend.</div>}
-        <p className="login-note">Recruiter accounts are for authorised hiring professionals and organisations.</p>
+        <div className="recruiter-trial-card"><strong>New to PDP?</strong><span>Start with 3 free candidate searches. No credit card required.</span><a href="/recruiters/subscription">View plans & subscription →</a></div><p className="login-note">Recruiter accounts are for authorised hiring professionals and organisations.</p>
       </section>
     </main>
   </div>;
